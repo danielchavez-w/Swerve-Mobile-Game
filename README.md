@@ -92,4 +92,4 @@ The entire game takes place under a **night sky with northern lights**. Stars tw
 
 ---
 
-[**➡️ PLAY THE GAME HERE**](https://yourusername.github.io/swerve/)
+[**➡️ PLAY THE GAME HERE**](https://danielchavez-w.github.io/Swerve-Mobile-Game/)
