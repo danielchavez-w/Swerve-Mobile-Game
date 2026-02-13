@@ -1,0 +1,297 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    overflow: hidden;
+    background: #020818;
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+#game-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+}
+
+#game-container canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* HUD */
+#hud {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 12px 16px;
+    padding-top: max(12px, env(safe-area-inset-top));
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    z-index: 10;
+    pointer-events: none;
+}
+
+#hud-left {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+#lives-container {
+    display: flex;
+    gap: 6px;
+}
+
+.life-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #44ffaa, #00cc88);
+    box-shadow: 0 0 8px rgba(0, 255, 136, 0.6);
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+.life-icon.lost {
+    opacity: 0.2;
+    transform: scale(0.6);
+    background: #333;
+    box-shadow: none;
+}
+
+#ghost-indicator {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+#ghost-text {
+    color: #00ffff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-shadow: 0 0 8px #00ffff;
+    animation: ghostPulse 0.5s ease-in-out infinite alternate;
+}
+
+#ghost-ring {
+    width: 28px;
+    height: 28px;
+}
+
+#ghost-timer-ring {
+    transition: stroke-dashoffset 0.1s linear;
+}
+
+@keyframes ghostPulse {
+    from { opacity: 0.6; }
+    to { opacity: 1; }
+}
+
+#hud-center {
+    text-align: center;
+}
+
+#score-display {
+    color: #fff;
+    font-size: 32px;
+    font-weight: 800;
+    text-shadow: 0 0 12px rgba(0, 255, 200, 0.5), 0 0 24px rgba(0, 255, 200, 0.2);
+    transition: transform 0.15s;
+    letter-spacing: 2px;
+}
+
+#score-display.pulse {
+    transform: scale(1.2);
+}
+
+#hud-right {
+    text-align: right;
+}
+
+#highscore-display {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+/* Level Up Notification */
+#level-up {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 20;
+    pointer-events: none;
+}
+
+#level-up-text {
+    color: #44ffaa;
+    font-size: 48px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    text-shadow: 0 0 20px rgba(68, 255, 170, 0.8), 0 0 40px rgba(68, 255, 170, 0.4);
+    animation: levelUpAnim 1.5s ease-out forwards;
+}
+
+@keyframes levelUpAnim {
+    0% { opacity: 0; transform: scale(0.5); }
+    20% { opacity: 1; transform: scale(1.1); }
+    40% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1) translateY(-30px); }
+}
+
+/* Title Screen */
+#title-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 30;
+    background: radial-gradient(ellipse at center, rgba(0, 20, 40, 0.88) 0%, rgba(0, 5, 15, 0.96) 100%);
+    cursor: pointer;
+}
+
+#game-title {
+    color: #fff;
+    font-size: 60px;
+    font-weight: 900;
+    letter-spacing: 10px;
+    text-transform: uppercase;
+    text-shadow: 0 0 20px rgba(0, 255, 170, 0.7), 0 0 40px rgba(0, 255, 170, 0.3), 0 0 80px rgba(0, 200, 255, 0.2);
+    margin-bottom: 20px;
+}
+
+#title-highscore {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    margin-bottom: 50px;
+}
+
+#tap-to-start {
+    color: #44ffaa;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    animation: tapPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes tapPulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+}
+
+/* Game Over Screen */
+#game-over-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 30;
+    background: radial-gradient(ellipse at center, rgba(30, 5, 10, 0.9) 0%, rgba(0, 0, 0, 0.95) 100%);
+    cursor: pointer;
+}
+
+#game-over-title {
+    color: #ff2d6b;
+    font-size: 44px;
+    font-weight: 900;
+    letter-spacing: 6px;
+    text-shadow: 0 0 20px rgba(255, 45, 107, 0.6);
+    margin-bottom: 30px;
+}
+
+#final-score-label {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 14px;
+    letter-spacing: 3px;
+    margin-bottom: 8px;
+}
+
+#final-score {
+    color: #fff;
+    font-size: 56px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    text-shadow: 0 0 16px rgba(255, 255, 255, 0.5);
+    margin-bottom: 16px;
+}
+
+#final-highscore {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    margin-bottom: 50px;
+}
+
+#restart-btn {
+    color: #44ffaa;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    animation: tapPulse 1.5s ease-in-out infinite;
+}
+
+/* Screen shake */
+.screen-shake {
+    animation: shake 0.3s ease-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translate(0, 0); }
+    10% { transform: translate(-4px, 2px); }
+    20% { transform: translate(4px, -2px); }
+    30% { transform: translate(-3px, 3px); }
+    40% { transform: translate(3px, -1px); }
+    50% { transform: translate(-2px, 2px); }
+    60% { transform: translate(2px, -2px); }
+    70% { transform: translate(-1px, 1px); }
+}
+
+/* Red flash overlay */
+#hit-flash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 0, 0, 0.3);
+    z-index: 5;
+    pointer-events: none;
+    animation: flashFade 0.3s ease-out forwards;
+}
+
+@keyframes flashFade {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}

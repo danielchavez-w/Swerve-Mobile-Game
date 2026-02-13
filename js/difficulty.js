@@ -1,0 +1,39 @@
+// Difficulty scaling based on cumulative score
+
+const LEVELS = [
+    { minScore: 0, level: 1, name: 'Easy', speedMultiplier: 1.0 },
+    { minScore: 500, level: 2, name: 'Medium', speedMultiplier: 1.2 },
+    { minScore: 1500, level: 3, name: 'Hard', speedMultiplier: 1.4 },
+    { minScore: 3000, level: 4, name: 'Very Hard', speedMultiplier: 1.6 },
+    { minScore: 5000, level: 5, name: 'Extreme', speedMultiplier: 1.8 }
+];
+
+let currentLevel = 1;
+
+export function getDifficultyForScore(score) {
+    let matched = LEVELS[0];
+    for (const l of LEVELS) {
+        if (score >= l.minScore) {
+            matched = l;
+        }
+    }
+    return matched;
+}
+
+export function checkLevelUp(score) {
+    const diff = getDifficultyForScore(score);
+    if (diff.level > currentLevel) {
+        currentLevel = diff.level;
+        return diff;
+    }
+    return null;
+}
+
+export function getCurrentLevel() { return currentLevel; }
+export function getSpeedMultiplier(score) {
+    return getDifficultyForScore(score).speedMultiplier;
+}
+
+export function resetDifficulty() {
+    currentLevel = 1;
+}
