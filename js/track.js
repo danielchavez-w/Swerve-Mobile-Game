@@ -27,7 +27,6 @@ let nextZ = 0;
 let currentY = START_Y;
 let segmentIndex = 0;
 let totalGenerated = 0;
-let pendingGap = false;     // After a ramp, skip one segment (air gap)
 
 // ── Materials ──
 const trackMat3D = new THREE.MeshStandardMaterial({
@@ -165,26 +164,6 @@ function makePhysicsFlat(world, phyMat, x, y, z, halfW) {
 
 // ── Main segment generation ──
 export function generateSegment(scene, world, trackMaterial, difficultyLevel) {
-    // After a ramp → insert an air gap (ball flies over this)
-    if (pendingGap) {
-        pendingGap = false;
-        const gapSeg = {
-            group: new THREE.Group(),
-            bodies: [],
-            type: 'gap',
-            zPos: nextZ,
-            width: STANDARD_WIDTH,
-            endY: currentY,
-            endX: 0,
-            materials: []
-        };
-        segments.push(gapSeg);
-        nextZ -= SEGMENT_LENGTH;
-        segmentIndex++;
-        totalGenerated++;
-        return gapSeg;
-    }
-
     // Gradually lower Y during slope phase
     if (totalGenerated < NUM_SLOPE_SEGS) {
         currentY -= SLOPE_STEP;
@@ -193,17 +172,7 @@ export function generateSegment(scene, world, trackMaterial, difficultyLevel) {
     }
     if (currentY < 0) currentY = 0;
 
-    const type = chooseType(difficultyLevel);
-    let segment;
-
-    if (type === 'ramp_up') {
-        // Ramp near edge is at currentY (matches floor), slopes UP
-        segment = buildRamp(scene, world, trackMaterial, nextZ, currentY);
-        pendingGap = true;      // Next segment = air gap
-        // Don't raise currentY — floor stays at slope level after the gap
-    } else {
-        segment = buildFlat(scene, world, trackMaterial, nextZ, currentY);
-    }
+    const segment = buildFlat(scene, world, trackMaterial, nextZ, currentY);
 
     segments.push(segment);
     nextZ -= SEGMENT_LENGTH;
@@ -274,7 +243,6 @@ export function resetTrack(scene, world) {
     currentY = START_Y;
     segmentIndex = 0;
     totalGenerated = 0;
-    pendingGap = false;
 }
 
 export function getLastSegmentZ() {

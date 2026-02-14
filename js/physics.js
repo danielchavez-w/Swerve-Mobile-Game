@@ -13,19 +13,23 @@ export const GROUPS = {
 
 export function initPhysics() {
     world = new CANNON.World();
-    world.gravity.set(0, -25, 0);
+    world.gravity.set(0, -9.82, 0);
     world.broadphase = new CANNON.SAPBroadphase(world);
     world.allowSleep = false;
-    world.solver.iterations = 10;  // More iterations = less clipping through floors
-    world.defaultContactMaterial.friction = 0.3;
-    world.defaultContactMaterial.restitution = 0.3;
+    world.solver.iterations = 20;
+    world.defaultContactMaterial.friction = 0.4;
+    world.defaultContactMaterial.restitution = 0;
+    world.defaultContactMaterial.contactEquationStiffness = 1e8;
+    world.defaultContactMaterial.contactEquationRelaxation = 3;
 
-    // Track-marble contact — some friction for rolling, some bounce for ramps
+    // Track-marble contact — friction for rolling, zero bounce
     const trackMaterial = new CANNON.Material('track');
     const marbleMaterial = new CANNON.Material('marble');
     const trackMarbleContact = new CANNON.ContactMaterial(trackMaterial, marbleMaterial, {
-        friction: 0.3,
-        restitution: 0.25
+        friction: 0.4,
+        restitution: 0,
+        contactEquationStiffness: 1e8,
+        contactEquationRelaxation: 3
     });
     world.addContactMaterial(trackMarbleContact);
 

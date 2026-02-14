@@ -134,7 +134,7 @@ export function createMarble(scene, world, marbleMaterial) {
         collisionFilterGroup: GROUPS.MARBLE,
         collisionFilterMask: GROUPS.TRACK | GROUPS.OBSTACLE | GROUPS.RAIL
     });
-    marbleBody.position.set(0, 12, 0);
+    marbleBody.position.set(0, 1, 0);
     world.addBody(marbleBody);
 
     return { mesh: marbleMesh, body: marbleBody };
@@ -186,10 +186,12 @@ export function getMarbleBody() { return marbleBody; }
 export function getMarbleRadius() { return MARBLE_RADIUS; }
 
 export function respawnMarble(z, y) {
-    const spawnY = (y !== undefined) ? y : 3;
-    // Respawn well ahead of where ball fell, centered on track
-    marbleBody.position.set(0, spawnY, z - 20);
-    // Keep moderate forward speed so ball doesn't stall
-    marbleBody.velocity.set(0, 0, -8);
+    const spawnY = (y !== undefined) ? y - 0.05 : 3;
+    marbleBody.position.set(0, spawnY, z);
+    marbleBody.previousPosition.set(0, spawnY, z);
+    marbleBody.interpolatedPosition.set(0, spawnY, z);
+    marbleBody.velocity.set(0, 0, 0);
     marbleBody.angularVelocity.set(0, 0, 0);
+    marbleBody.force.set(0, 0, 0);
+    marbleBody.torque.set(0, 0, 0);
 }

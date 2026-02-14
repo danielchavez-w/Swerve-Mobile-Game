@@ -132,14 +132,31 @@ function startGame() {
         console.log(`[RAIL DEBUG] rail-like meshes found: ${railMeshes.length}`, railMeshes);
     }
 
-    // Spawn ball on the FIRST segment (highest point)
-    const firstSegY = getSegments()[0].endY;
-    respawnMarble(0, firstSegY + 1);
-
-    // Zero out velocity so ball starts still
+    // Place ball on the first segment — push it slightly into the surface
+    // so the physics solver detects contact immediately (no free-fall frame)
+    const firstSeg = getSegments()[0];
     const marbleBody = getMarbleBody();
+    const spawnY = firstSeg.endY + getMarbleRadius() - 0.05;
+    marbleBody.position.set(0, spawnY, firstSeg.zPos);
+    marbleBody.previousPosition.set(0, spawnY, firstSeg.zPos);
+    marbleBody.interpolatedPosition.set(0, spawnY, firstSeg.zPos);
     marbleBody.velocity.set(0, 0, 0);
     marbleBody.angularVelocity.set(0, 0, 0);
+    marbleBody.force.set(0, 0, 0);
+    marbleBody.torque.set(0, 0, 0);
+
+    // Let physics settle — ball finds the surface before gameplay begins
+    for (let i = 0; i < 30; i++) {
+        world.step(1 / 120);
+    }
+    // After settling, freeze the ball in place on the ground
+    marbleBody.velocity.set(0, 0, 0);
+    marbleBody.angularVelocity.set(0, 0, 0);
+    marbleBody.force.set(0, 0, 0);
+    marbleBody.torque.set(0, 0, 0);
+    // Sync previous position to prevent interpolation jump
+    marbleBody.previousPosition.copy(marbleBody.position);
+    marbleBody.interpolatedPosition.copy(marbleBody.position);
 
     updateScore(score);
     updateHighScore(highScore);
@@ -149,6 +166,7 @@ function startGame() {
     hideTitleScreen();
     hideGameOver();
     showHUD();
+    lastTime = performance.now();
     gameState = STATES.PLAYING;
 }
 
@@ -246,6 +264,11 @@ function updatePlaying(dt, time) {
     // Step physics
     stepPhysics(dt);
 
+    // Ball must stay on the ground — kill any upward velocity
+    if (marbleBody.velocity.y > 0) {
+        marbleBody.velocity.y = 0;
+    }
+
     // Update marble visual
     updateMarble(dt);
 
@@ -255,7 +278,7 @@ function updatePlaying(dt, time) {
     // Check if marble fell off track
     const trackY = getCurrentTrackY();
     if (marbleBody.position.y < trackY - 20) {
-        respawnMarble(marbleBody.position.z, trackY + 1);
+        respawnMarble(marbleBody.position.z, trackY + getMarbleRadius());
         takeDamage();
         if (gameState !== STATES.PLAYING) return;
     }
