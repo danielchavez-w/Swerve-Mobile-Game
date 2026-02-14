@@ -10,7 +10,7 @@ const HALF_SEG = SEG_GEOM_LEN / 2;                 // 18
 const STANDARD_WIDTH = 9;
 const RAIL_HEIGHT = 0.8;
 const RAIL_RADIUS = 0.25;
-const TRACK_THICKNESS = 3;
+const TRACK_THICKNESS = 3;          // Physics only — keeps ball from tunneling
 
 // ── Slope ──
 const START_Y = 10;
@@ -32,31 +32,28 @@ let pendingGap = false;     // After a ramp, skip one segment (air gap)
 // ── Materials ──
 const trackMat3D = new THREE.MeshStandardMaterial({
     color: 0x0a1628, roughness: 0.5, metalness: 0.4,
-    emissive: 0x061020, emissiveIntensity: 0.4
+    emissive: 0x061020, emissiveIntensity: 0.4,
+    side: THREE.FrontSide
 });
 const rampMat3D = new THREE.MeshStandardMaterial({
     color: 0x081420, roughness: 0.35, metalness: 0.5,
-    emissive: 0x003322, emissiveIntensity: 0.6
+    emissive: 0x003322, emissiveIntensity: 0.6,
+    side: THREE.FrontSide
 });
 
-const neonColors = [0x00ff88, 0x00ffcc, 0x00ddff, 0x44ffaa, 0x00ffff, 0x88ff44];
-function getNeonColor(i) { return neonColors[i % neonColors.length]; }
 
 export function initTrack() {}
 
 // ── Build a flat horizontal segment ──
 function buildFlat(scene, world, phyMat, zPos, yPos) {
     const width = STANDARD_WIDTH;
-    const neon = getNeonColor(segmentIndex);
     const group = new THREE.Group();
 
-    const geo = new THREE.BoxGeometry(width, TRACK_THICKNESS, SEG_GEOM_LEN);
+    // Flat plane — top face only, no sides, no bottom
+    const geo = new THREE.PlaneGeometry(width, SEG_GEOM_LEN);
     const surface = new THREE.Mesh(geo, trackMat3D);
-    surface.position.y = -TRACK_THICKNESS / 2;
+    surface.rotation.x = -Math.PI / 2;   // lay flat
     group.add(surface);
-
-    addRails(group, width, neon);
-    addStrips(group, width, neon);
 
     group.position.set(0, yPos, zPos);
     scene.add(group);
@@ -80,17 +77,13 @@ function buildRamp(scene, world, phyMat, zPos, yPos) {
     // midY = yPos + HALF_SEG * sin(RAMP_ANGLE) = yPos + RAMP_RISE
     const midY = yPos + RAMP_RISE;
     const endY = yPos + 2 * RAMP_RISE;  // Peak at far edge
-    const neon = 0x44ff88;
-
     const group = new THREE.Group();
 
-    const geo = new THREE.BoxGeometry(width, TRACK_THICKNESS, SEG_GEOM_LEN);
+    // Flat plane — top face only, no sides, no bottom
+    const geo = new THREE.PlaneGeometry(width, SEG_GEOM_LEN);
     const surface = new THREE.Mesh(geo, rampMat3D);
-    surface.position.y = -TRACK_THICKNESS / 2;
+    surface.rotation.x = -Math.PI / 2;   // lay flat
     group.add(surface);
-
-    addRails(group, width, neon);
-    addStrips(group, width, neon);
 
     // Arrow markers on ramp
     for (let i = 0; i < 3; i++) {
@@ -140,41 +133,6 @@ function buildRamp(scene, world, phyMat, zPos, yPos) {
         group, bodies: [body, lb, rb], type: 'ramp_up', zPos, width,
         endY, endX: 0, isRamp: true, materials: []
     };
-}
-
-// ── Visual helpers ──
-function addRails(group, width, neonColor) {
-    const railMat = new THREE.MeshStandardMaterial({
-        color: neonColor, emissive: neonColor, emissiveIntensity: 1.0,
-        roughness: 0.2, metalness: 0.5
-    });
-    const rGeo = new THREE.CylinderGeometry(RAIL_RADIUS, RAIL_RADIUS, SEG_GEOM_LEN, 8);
-
-    const left = new THREE.Mesh(rGeo, railMat);
-    left.rotation.x = Math.PI / 2;
-    left.position.set(-width / 2, RAIL_HEIGHT / 2, 0);
-    group.add(left);
-
-    const right = new THREE.Mesh(rGeo, railMat);
-    right.rotation.x = Math.PI / 2;
-    right.position.set(width / 2, RAIL_HEIGHT / 2, 0);
-    group.add(right);
-}
-
-function addStrips(group, width, neonColor) {
-    const geo = new THREE.PlaneGeometry(0.4, SEG_GEOM_LEN);
-    const mat = new THREE.MeshBasicMaterial({
-        color: neonColor, transparent: true, opacity: 0.6, side: THREE.DoubleSide
-    });
-    const l = new THREE.Mesh(geo, mat);
-    l.position.set(-width / 2, 0.01, 0);
-    l.rotation.x = -Math.PI / 2;
-    group.add(l);
-    const r = new THREE.Mesh(geo, mat);
-    r.position.set(width / 2, 0.01, 0);
-    r.rotation.x = -Math.PI / 2;
-    group.add(r);
-    return mat;
 }
 
 // ── Physics helpers ──
@@ -291,11 +249,13 @@ function disposeGroup(group) {
 
 export function removeOldSegments(scene, world, marbleZ) {
     const threshold = marbleZ + SEGMENT_LENGTH * 3;
+    let removed = false;
     while (segments.length > 0 && segments[0].zPos > threshold) {
         const seg = segments.shift();
         scene.remove(seg.group);
         disposeGroup(seg.group);
         seg.bodies.forEach(b => world.removeBody(b));
+        removed = true;
     }
 }
 

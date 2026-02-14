@@ -5,6 +5,7 @@ import { initPhysics, stepPhysics, getWorld, GROUPS } from './physics.js';
 import { createMarble, updateMarble, getMarbleMesh, getMarbleBody, getMarbleRadius, enterGhostMode, endGhostMode, isGhostMode, getGhostTimer, getGhostDuration, respawnMarble } from './player.js';
 import { initControls, updateControls } from './controls.js';
 import { initTrack, generateSegment, removeOldSegments, getSegments, getSegmentLength, getLastSegmentZ, resetTrack, getCurrentTrackY } from './track.js';
+import { initRails, updateRails } from './rails.js';
 import { spawnObstacle, updateObstacles, removeOldObstacles, resetObstacles } from './obstacles.js';
 import { spawnCollectiblesForSegment, updateCollectibles, removeOldCollectibles, resetCollectibles } from './collectibles.js';
 import { initHUD, updateScore, updateHighScore, updateLives, showGhostIndicator, hideGhostIndicator, showLevelUp, showHUD, hideHUD, showTitleScreen, hideTitleScreen, showGameOver, hideGameOver, screenShake, hitFlash, getRestartButton, getTitleScreen } from './hud.js';
@@ -56,6 +57,7 @@ function init() {
     initControls(marbleMesh, marbleBody, camera, renderer);
 
     initTrack();
+    initRails(scene);
 
     initHUD();
 
@@ -110,6 +112,24 @@ function startGame() {
         if (i > 5) {
             spawnObstacle(scene, world, seg.zPos, seg.width || 8, level, seg.endY);
         }
+    }
+
+    // ── Debug: verify no duplicate rail meshes ──
+    {
+        const s = getScene();
+        const railMeshes = [];
+        s.traverse(child => {
+            if (child.isMesh) {
+                const name = (child.name || '').toLowerCase();
+                const geoType = child.geometry?.type || '';
+                if (name.includes('rail') || name.includes('edge') ||
+                    (geoType === 'CylinderGeometry' && child.material?.emissiveIntensity > 0)) {
+                    railMeshes.push({ name: child.name || '(unnamed)', type: geoType, id: child.id });
+                }
+            }
+        });
+        console.log(`[RAIL DEBUG] scene.children: ${s.children.length}`);
+        console.log(`[RAIL DEBUG] rail-like meshes found: ${railMeshes.length}`, railMeshes);
     }
 
     // Spawn ball on the FIRST segment (highest point)
@@ -260,6 +280,9 @@ function updatePlaying(dt, time) {
     removeOldSegments(scene, world, marbleZ);
     removeOldObstacles(scene, world, marbleZ);
     removeOldCollectibles(scene, marbleZ);
+
+    // Update rail visuals
+    updateRails();
 
     // Update obstacles (animations)
     updateObstacles(time);
