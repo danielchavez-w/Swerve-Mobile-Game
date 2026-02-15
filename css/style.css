@@ -135,11 +135,12 @@ body {
 /* Level Up Notification */
 #level-up {
     position: fixed;
-    top: 50%;
+    top: 22%;
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 20;
     pointer-events: none;
+    text-align: center;
 }
 
 #level-up-text {

@@ -26,9 +26,8 @@ let highScore = 0;
 let lives = 3;
 let lastTime = 0;
 let gameTime = 0;
-const BASE_FORWARD_SPEED = -16;
+const BASE_FORWARD_SPEED = -4;
 const SEGMENTS_AHEAD = 25;
-const SPEED_RAMP_TIME = 3.0;       // Seconds to reach full speed from start
 
 // Camera follow parameters
 const cameraOffset = new THREE.Vector3(0, 5, 8);
@@ -166,6 +165,7 @@ function startGame() {
     hideTitleScreen();
     hideGameOver();
     showHUD();
+    showLevelUp(1);
     lastTime = performance.now();
     gameState = STATES.PLAYING;
 }
@@ -237,26 +237,25 @@ function updatePlaying(dt, time) {
     const marbleMesh = getMarbleMesh();
     const camera = getCamera();
 
-    // ── Gradual speed ramp — no sudden acceleration at start ──
-    const speedRamp = Math.min(gameTime / SPEED_RAMP_TIME, 1.0);
+    // Speed only changes on level-up, no gradual ramp
     const speedMult = getSpeedMultiplier(score);
-    const forwardSpeed = BASE_FORWARD_SPEED * speedMult * speedRamp;
+    const forwardSpeed = BASE_FORWARD_SPEED * speedMult;
     const currentVZ = marbleBody.velocity.z;
 
-    // Gentle constant forward push (ramped)
-    _forceVec.set(0, 0, -15 * speedMult * speedRamp);
+    // Gentle constant forward push
+    _forceVec.set(0, 0, -5 * speedMult);
     marbleBody.applyForce(_forceVec, marbleBody.position);
 
     // If going slower than target, nudge toward it (gentle boost)
     if (currentVZ > forwardSpeed) {
-        _boostVec.set(0, 0, (forwardSpeed - currentVZ) * 3);
+        _boostVec.set(0, 0, (forwardSpeed - currentVZ) * 2);
         marbleBody.applyForce(_boostVec, marbleBody.position);
     }
 
     // NEVER allow backward movement
     if (currentVZ > 0) {
         marbleBody.velocity.z = 0;
-        _backwardVec.set(0, 0, -10 * speedRamp);
+        _backwardVec.set(0, 0, -10);
         marbleBody.applyForce(_backwardVec, marbleBody.position);
     }
 
