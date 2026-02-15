@@ -24,6 +24,15 @@ const blockMaterial = new THREE.MeshStandardMaterial({
     color: 0xaa00ff, emissive: 0x6600aa, emissiveIntensity: 0.5,
     roughness: 0.4, metalness: 0.3
 });
+const barMaterial = new THREE.MeshStandardMaterial({
+    color: 0xff4400, emissive: 0xff2200, emissiveIntensity: 0.5,
+    roughness: 0.4, metalness: 0.4
+});
+
+// Shared geometries — avoids creating new geometry per obstacle
+const blockGeo = new THREE.BoxGeometry(1.4, 1.4, 1.4);
+const pillarGeo8 = new THREE.CylinderGeometry(0.12, 0.12, 1, 6);
+const pillarGeo10 = new THREE.CylinderGeometry(0.1, 0.1, 1, 6);
 
 // ── Static wall ──
 function createStaticWall(scene, world, zPos, trackWidth, trackY) {
@@ -36,10 +45,6 @@ function createStaticWall(scene, world, zPos, trackWidth, trackY) {
     const mesh = new THREE.Mesh(geo, wallMaterial);
     mesh.position.set(xOffset, trackY + wallHeight / 2, zPos);
     scene.add(mesh);
-
-    const edgeGeo = new THREE.EdgesGeometry(geo);
-    const edgeMat = new THREE.LineBasicMaterial({ color: 0xff4466 });
-    mesh.add(new THREE.LineSegments(edgeGeo, edgeMat));
 
     const shape = new CANNON.Box(new CANNON.Vec3(wallWidth / 2, wallHeight / 2, wallDepth / 2));
     const body = new CANNON.Body({
@@ -65,9 +70,10 @@ function createSwingingArm(scene, world, zPos, trackWidth, trackY) {
     const group = new THREE.Group();
     group.position.set(0, 0, zPos);
 
-    const pillarGeo = new THREE.CylinderGeometry(0.12, 0.12, armY - trackY + 1.5, 8);
-    const pillar = new THREE.Mesh(pillarGeo, armMaterial);
-    pillar.position.set(0, trackY + (armY - trackY + 1.5) / 2, 0);
+    const pillar = new THREE.Mesh(pillarGeo8, armMaterial);
+    const pillarH = armY - trackY + 1.5;
+    pillar.scale.y = pillarH;
+    pillar.position.set(0, trackY + pillarH / 2, 0);
     group.add(pillar);
 
     const armGeo = new THREE.BoxGeometry(armLength, armHeight, armDepth);
@@ -103,14 +109,9 @@ function createSwingingArm(scene, world, zPos, trackWidth, trackY) {
 function createSlidingBlock(scene, world, zPos, trackWidth, trackY) {
     const blockSize = 1.4;
 
-    const geo = new THREE.BoxGeometry(blockSize, blockSize, blockSize);
-    const mesh = new THREE.Mesh(geo, blockMaterial);
+    const mesh = new THREE.Mesh(blockGeo, blockMaterial);
     mesh.position.set(0, trackY + blockSize / 2, zPos);
     scene.add(mesh);
-
-    const edgeGeo = new THREE.EdgesGeometry(geo);
-    const edgeMat = new THREE.LineBasicMaterial({ color: 0xcc44ff });
-    mesh.add(new THREE.LineSegments(edgeGeo, edgeMat));
 
     const shape = new CANNON.Box(new CANNON.Vec3(blockSize / 2, blockSize / 2, blockSize / 2));
     const body = new CANNON.Body({
@@ -146,25 +147,21 @@ function createLowBar(scene, world, zPos, trackWidth, trackY) {
     const group = new THREE.Group();
     group.position.set(0, 0, zPos);
 
-    const barMat = new THREE.MeshStandardMaterial({
-        color: 0xff4400, emissive: 0xff2200, emissiveIntensity: 0.5,
-        roughness: 0.4, metalness: 0.4
-    });
-
     const leftGeo = new THREE.BoxGeometry(sectionWidth, barHeight, barDepth);
-    const leftBar = new THREE.Mesh(leftGeo, barMat);
+    const leftBar = new THREE.Mesh(leftGeo, barMaterial);
     leftBar.position.set(-(gapWidth / 2 + sectionWidth / 2), barY, 0);
     group.add(leftBar);
 
     const rightGeo = new THREE.BoxGeometry(sectionWidth, barHeight, barDepth);
-    const rightBar = new THREE.Mesh(rightGeo, barMat);
+    const rightBar = new THREE.Mesh(rightGeo, barMaterial);
     rightBar.position.set(gapWidth / 2 + sectionWidth / 2, barY, 0);
     group.add(rightBar);
 
-    const pillarGeo = new THREE.CylinderGeometry(0.1, 0.1, barY - trackY + barHeight, 8);
+    const pillarH = barY - trackY + barHeight;
     [-trackWidth / 2, trackWidth / 2].forEach(px => {
-        const p = new THREE.Mesh(pillarGeo, barMat);
-        p.position.set(px, trackY + (barY - trackY + barHeight) / 2, 0);
+        const p = new THREE.Mesh(pillarGeo10, barMaterial);
+        p.scale.y = pillarH;
+        p.position.set(px, trackY + pillarH / 2, 0);
         group.add(p);
     });
 
@@ -248,14 +245,16 @@ export function removeOldObstacles(scene, world, marbleZ) {
         if (obstacles[i].zPos > removeThreshold) {
             const obs = obstacles[i];
             scene.remove(obs.mesh);
+            // Dispose non-shared geometries only
             if (obs.mesh.traverse) {
                 obs.mesh.traverse(child => {
-                    if (child.geometry) child.geometry.dispose();
-                    if (child.material) {
-                        if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
-                        else child.material.dispose();
+                    if (child.geometry && child.geometry !== blockGeo &&
+                        child.geometry !== pillarGeo8 && child.geometry !== pillarGeo10) {
+                        child.geometry.dispose();
                     }
                 });
+            } else if (obs.mesh.geometry && obs.mesh.geometry !== blockGeo) {
+                obs.mesh.geometry.dispose();
             }
             world.removeBody(obs.body);
             if (obs.extraBodies) obs.extraBodies.forEach(b => world.removeBody(b));
@@ -271,12 +270,13 @@ export function resetObstacles(scene, world) {
         scene.remove(obs.mesh);
         if (obs.mesh.traverse) {
             obs.mesh.traverse(child => {
-                if (child.geometry) child.geometry.dispose();
-                if (child.material) {
-                    if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
-                    else child.material.dispose();
+                if (child.geometry && child.geometry !== blockGeo &&
+                    child.geometry !== pillarGeo8 && child.geometry !== pillarGeo10) {
+                    child.geometry.dispose();
                 }
             });
+        } else if (obs.mesh.geometry && obs.mesh.geometry !== blockGeo) {
+            obs.mesh.geometry.dispose();
         }
         world.removeBody(obs.body);
         if (obs.extraBodies) obs.extraBodies.forEach(b => world.removeBody(b));

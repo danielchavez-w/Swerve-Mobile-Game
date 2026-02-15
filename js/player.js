@@ -78,27 +78,21 @@ function createMarbleTexture() {
 }
 
 export function createMarble(scene, world, marbleMaterial) {
-    const geometry = new THREE.SphereGeometry(MARBLE_RADIUS, 32, 32);
+    const geometry = new THREE.SphereGeometry(MARBLE_RADIUS, 20, 20);
     const marbleTexture = createMarbleTexture();
 
-    originalMaterial = new THREE.MeshPhysicalMaterial({
+    originalMaterial = new THREE.MeshStandardMaterial({
         map: marbleTexture,
-        metalness: 0.15,
-        roughness: 0.08,
-        clearcoat: 1.0,
-        clearcoatRoughness: 0.03,
-        transparent: false,
-        envMapIntensity: 1.5,
+        metalness: 0.3,
+        roughness: 0.1,
         emissive: 0x331144,
         emissiveIntensity: 0.2
     });
 
-    ghostMaterial = new THREE.MeshPhysicalMaterial({
+    ghostMaterial = new THREE.MeshStandardMaterial({
         map: marbleTexture,
-        metalness: 0.15,
-        roughness: 0.08,
-        clearcoat: 1.0,
-        clearcoatRoughness: 0.03,
+        metalness: 0.3,
+        roughness: 0.1,
         transparent: true,
         opacity: 0.35,
         emissive: 0x00ffff,

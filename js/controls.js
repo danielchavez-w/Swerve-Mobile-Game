@@ -18,6 +18,10 @@ const JUMP_SPEED_BOOST = 3;        // Extra forward speed on jump
 // Keyboard
 const keys = {};
 
+// Reusable vectors to avoid per-frame allocations
+const _unprojectVec = new THREE.Vector3();
+const _keyForceVec = new CANNON.Vec3();
+
 export function initControls(_marbleMesh, _marbleBody, _camera, _renderer) {
     marbleMesh = _marbleMesh;
     marbleBody = _marbleBody;
@@ -55,17 +59,15 @@ function fingerToWorldX() {
     const ndcX = (fingerX / window.innerWidth) * 2 - 1;
     const ndcY = -(fingerY / window.innerHeight) * 2 + 1;
 
-    const vec = new THREE.Vector3(ndcX, ndcY, 0.5);
-    vec.unproject(camera);
+    _unprojectVec.set(ndcX, ndcY, 0.5);
+    _unprojectVec.unproject(camera);
 
-    const dir = vec.sub(camera.position).normalize();
+    _unprojectVec.sub(camera.position).normalize();
 
     const ballY = marbleMesh.position.y;
-    if (Math.abs(dir.y) < 0.001) return marbleMesh.position.x;
-    const t = (ballY - camera.position.y) / dir.y;
-    const worldX = camera.position.x + dir.x * t;
-
-    return worldX;
+    if (Math.abs(_unprojectVec.y) < 0.001) return marbleMesh.position.x;
+    const t = (ballY - camera.position.y) / _unprojectVec.y;
+    return camera.position.x + _unprojectVec.x * t;
 }
 
 // ── Touch ──
@@ -151,10 +153,12 @@ export function updateControls(dt) {
 
     // ── Keyboard ──
     if (keys['KeyA'] || keys['ArrowLeft']) {
-        marbleBody.applyForce(new CANNON.Vec3(-200, 0, 0), marbleBody.position);
+        _keyForceVec.set(-200, 0, 0);
+        marbleBody.applyForce(_keyForceVec, marbleBody.position);
     }
     if (keys['KeyD'] || keys['ArrowRight']) {
-        marbleBody.applyForce(new CANNON.Vec3(200, 0, 0), marbleBody.position);
+        _keyForceVec.set(200, 0, 0);
+        marbleBody.applyForce(_keyForceVec, marbleBody.position);
     }
 
     // ── Jump ──

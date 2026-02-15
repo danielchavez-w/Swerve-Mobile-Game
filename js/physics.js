@@ -15,8 +15,8 @@ export function initPhysics() {
     world = new CANNON.World();
     world.gravity.set(0, -9.82, 0);
     world.broadphase = new CANNON.SAPBroadphase(world);
-    world.allowSleep = false;
-    world.solver.iterations = 20;
+    world.allowSleep = true;
+    world.solver.iterations = 10;
     world.defaultContactMaterial.friction = 0.4;
     world.defaultContactMaterial.restitution = 0;
     world.defaultContactMaterial.contactEquationStiffness = 1e8;
@@ -40,7 +40,6 @@ export function getWorld() { return world; }
 
 export function stepPhysics(dt) {
     if (world) {
-        // Fixed timestep with more sub-steps to prevent tunneling
-        world.step(1 / 120, dt, 5);
+        world.step(1 / 60, dt, 3);
     }
 }

@@ -35,6 +35,14 @@ const cameraOffset = new THREE.Vector3(0, 5, 8);
 const cameraLookAhead = new THREE.Vector3(0, 0, -12);
 const cameraLerpSpeed = 3.5;
 
+// Reusable objects to avoid per-frame allocations (reduces GC stutter)
+const _forceVec = new CANNON.Vec3();
+const _boostVec = new CANNON.Vec3();
+const _backwardVec = new CANNON.Vec3();
+const _cameraTargetPos = new THREE.Vector3();
+const _cameraLookTarget = new THREE.Vector3();
+const _marblePosVec = new THREE.Vector3();
+
 // Track last segment generated
 let segmentsGenerated = 0;
 
@@ -114,24 +122,6 @@ function startGame() {
         }
     }
 
-    // ── Debug: verify no duplicate rail meshes ──
-    {
-        const s = getScene();
-        const railMeshes = [];
-        s.traverse(child => {
-            if (child.isMesh) {
-                const name = (child.name || '').toLowerCase();
-                const geoType = child.geometry?.type || '';
-                if (name.includes('rail') || name.includes('edge') ||
-                    (geoType === 'CylinderGeometry' && child.material?.emissiveIntensity > 0)) {
-                    railMeshes.push({ name: child.name || '(unnamed)', type: geoType, id: child.id });
-                }
-            }
-        });
-        console.log(`[RAIL DEBUG] scene.children: ${s.children.length}`);
-        console.log(`[RAIL DEBUG] rail-like meshes found: ${railMeshes.length}`, railMeshes);
-    }
-
     // Place ball on the first segment — push it slightly into the surface
     // so the physics solver detects contact immediately (no free-fall frame)
     const firstSeg = getSegments()[0];
@@ -146,8 +136,8 @@ function startGame() {
     marbleBody.torque.set(0, 0, 0);
 
     // Let physics settle — ball finds the surface before gameplay begins
-    for (let i = 0; i < 30; i++) {
-        world.step(1 / 120);
+    for (let i = 0; i < 15; i++) {
+        world.step(1 / 60);
     }
     // After settling, freeze the ball in place on the ground
     marbleBody.velocity.set(0, 0, 0);
@@ -244,18 +234,20 @@ function updatePlaying(dt, time) {
     const currentVZ = marbleBody.velocity.z;
 
     // Gentle constant forward push (ramped)
-    marbleBody.applyForce(new CANNON.Vec3(0, 0, -15 * speedMult * speedRamp), marbleBody.position);
+    _forceVec.set(0, 0, -15 * speedMult * speedRamp);
+    marbleBody.applyForce(_forceVec, marbleBody.position);
 
     // If going slower than target, nudge toward it (gentle boost)
     if (currentVZ > forwardSpeed) {
-        const boost = (forwardSpeed - currentVZ) * 3;
-        marbleBody.applyForce(new CANNON.Vec3(0, 0, boost), marbleBody.position);
+        _boostVec.set(0, 0, (forwardSpeed - currentVZ) * 3);
+        marbleBody.applyForce(_boostVec, marbleBody.position);
     }
 
     // NEVER allow backward movement
     if (currentVZ > 0) {
         marbleBody.velocity.z = 0;
-        marbleBody.applyForce(new CANNON.Vec3(0, 0, -10 * speedRamp), marbleBody.position);
+        _backwardVec.set(0, 0, -10 * speedRamp);
+        marbleBody.applyForce(_backwardVec, marbleBody.position);
     }
 
     // Touch / trackpad / keyboard controls
@@ -311,8 +303,8 @@ function updatePlaying(dt, time) {
     updateObstacles(time);
 
     // Update collectibles and check collections
-    const marblePos = new THREE.Vector3().copy(marbleBody.position);
-    const pointsEarned = updateCollectibles(time, marblePos, getMarbleRadius());
+    _marblePosVec.copy(marbleBody.position);
+    const pointsEarned = updateCollectibles(time, _marblePosVec, getMarbleRadius());
 
     if (pointsEarned > 0) {
         score += pointsEarned;
@@ -343,20 +335,19 @@ function updatePlaying(dt, time) {
 }
 
 function updateCamera(camera, marbleMesh, dt) {
-    const targetPos = new THREE.Vector3(
+    _cameraTargetPos.set(
         marbleMesh.position.x * 0.4,
         marbleMesh.position.y + cameraOffset.y,
         marbleMesh.position.z + cameraOffset.z
     );
+    camera.position.lerp(_cameraTargetPos, cameraLerpSpeed * dt);
 
-    camera.position.lerp(targetPos, cameraLerpSpeed * dt);
-
-    const lookTarget = new THREE.Vector3(
+    _cameraLookTarget.set(
         marbleMesh.position.x * 0.3,
         marbleMesh.position.y + 0.5,
         marbleMesh.position.z + cameraLookAhead.z
     );
-    camera.lookAt(lookTarget);
+    camera.lookAt(_cameraLookTarget);
 }
 
 // Start the game

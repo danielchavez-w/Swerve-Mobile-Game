@@ -3,14 +3,15 @@ import * as THREE from 'three';
 let skyGroup;       // All sky elements in one group — follows the camera
 let stars;
 let auroraEntries = [];
+let starUpdateCounter = 0;
 
 export function createSkybox(scene) {
     skyGroup = new THREE.Group();
 
     scene.background = new THREE.Color(0x020818);
 
-    // Gradient dome
-    const domeGeo = new THREE.SphereGeometry(250, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2);
+    // Gradient dome — reduced segments for mobile perf
+    const domeGeo = new THREE.SphereGeometry(250, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2);
     const domeMat = new THREE.ShaderMaterial({
         uniforms: { uTime: { value: 0 } },
         vertexShader: `
@@ -47,8 +48,8 @@ export function createSkybox(scene) {
     skyGroup.add(dome);
     auroraEntries.push({ material: domeMat });
 
-    // Stars
-    const starCount = 500;
+    // Stars — reduced count for mobile perf
+    const starCount = 200;
     const starPositions = new Float32Array(starCount * 3);
     const starSizes = new Float32Array(starCount);
     const starBaseSize = new Float32Array(starCount);
@@ -95,7 +96,7 @@ function createAurora() {
     for (let i = 0; i < configs.length; i++) {
         const cfg = configs[i];
         const height = 25 + Math.random() * 15;
-        const geo = new THREE.PlaneGeometry(cfg.width, height, 40, 10);
+        const geo = new THREE.PlaneGeometry(cfg.width, height, 20, 5);
 
         const mat = new THREE.ShaderMaterial({
             uniforms: {
@@ -157,8 +158,9 @@ export function updateSkybox(time, cameraPos) {
         skyGroup.position.z = cameraPos.z;
     }
 
-    // Twinkle stars
-    if (stars) {
+    // Twinkle stars — only update every 3rd frame to save CPU
+    starUpdateCounter++;
+    if (stars && starUpdateCounter % 3 === 0) {
         const sizes = stars.geometry.attributes.size;
         const baseSizes = stars.geometry.userData.baseSizes;
         for (let i = 0; i < sizes.count; i++) {

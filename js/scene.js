@@ -2,23 +2,29 @@ import * as THREE from 'three';
 
 let scene, camera, renderer;
 
+const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
 export function initScene(container) {
     // Scene
     scene = new THREE.Scene();
     // Lighter fog with a neon blue tint — not too dark
     scene.fog = new THREE.FogExp2(0x061828, 0.008);
 
-    // Renderer
-    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    // Renderer — disable antialias on mobile for major perf gain
+    renderer = new THREE.WebGLRenderer({
+        antialias: !isMobile,
+        alpha: false,
+        powerPreference: 'high-performance'
+    });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.2;
     container.appendChild(renderer.domElement);
 
-    // Camera
-    camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 500);
+    // Camera — reduced far plane (fog hides anything beyond ~150 anyway)
+    camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 200);
     camera.position.set(0, 6, 10);
     camera.lookAt(0, 0, 0);
 
