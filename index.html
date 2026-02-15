@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Swerve</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -16,7 +19,7 @@
                 <span class="life-icon active" id="life-3"></span>
             </div>
             <div id="ghost-indicator" class="hidden">
-                <span id="ghost-text">GHOST</span>
+                <span id="ghost-text">ghost</span>
                 <svg id="ghost-ring" viewBox="0 0 36 36">
                     <circle cx="18" cy="18" r="16" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
                     <circle id="ghost-timer-ring" cx="18" cy="18" r="16" fill="none" stroke="#00ffff" stroke-width="2"
@@ -35,23 +38,23 @@
 
     <!-- Level Up Notification -->
     <div id="level-up" class="hidden">
-        <span id="level-up-text">Level 1</span>
+        <span id="level-up-text">level 1</span>
     </div>
 
     <!-- Title Screen -->
     <div id="title-screen">
-        <h1 id="game-title">Swerve</h1>
-        <div id="title-highscore">HIGH SCORE: 0</div>
-        <div id="tap-to-start">CLICK TO START</div>
+        <h1 id="game-title">swerve</h1>
+        <div id="title-highscore">high score: 0</div>
+        <div id="tap-to-start">click to start</div>
     </div>
 
     <!-- Game Over Screen -->
     <div id="game-over-screen" class="hidden">
-        <h2 id="game-over-title">GAME OVER</h2>
-        <div id="final-score-label">SCORE</div>
+        <h2 id="game-over-title">game over</h2>
+        <div id="final-score-label">score</div>
         <div id="final-score">0</div>
-        <div id="final-highscore">BEST: 0</div>
-        <div id="restart-btn">CLICK TO RESTART</div>
+        <div id="final-highscore">best: 0</div>
+        <div id="restart-btn">click to restart</div>
     </div>
 
     <!-- Canvas container -->

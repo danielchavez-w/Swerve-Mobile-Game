@@ -31,8 +31,8 @@ const barMaterial = new THREE.MeshStandardMaterial({
 
 // Shared geometries — avoids creating new geometry per obstacle
 const blockGeo = new THREE.BoxGeometry(1.4, 1.4, 1.4);
-const pillarGeo8 = new THREE.CylinderGeometry(0.12, 0.12, 1, 6);
-const pillarGeo10 = new THREE.CylinderGeometry(0.1, 0.1, 1, 6);
+const pillarGeo8 = new THREE.CylinderGeometry(0.12, 0.12, 1, 12);
+const pillarGeo10 = new THREE.CylinderGeometry(0.1, 0.1, 1, 12);
 
 // ── Static wall ──
 function createStaticWall(scene, world, zPos, trackWidth, trackY) {

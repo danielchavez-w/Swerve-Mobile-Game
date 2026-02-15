@@ -3,9 +3,9 @@ import * as THREE from 'three';
 const collectibles = [];
 
 // Shared geometries
-const dotGeo = new THREE.SphereGeometry(0.2, 8, 8);
-const diamondGeo = new THREE.OctahedronGeometry(0.35, 0);
-const hoopGeo = new THREE.TorusGeometry(1.5, 0.12, 8, 24);
+const dotGeo = new THREE.SphereGeometry(0.2, 12, 12);
+const diamondGeo = new THREE.OctahedronGeometry(0.35, 1);
+const hoopGeo = new THREE.TorusGeometry(1.5, 0.12, 12, 32);
 
 // Shared materials
 const dotMaterial = new THREE.MeshStandardMaterial({

@@ -11,7 +11,7 @@ export function createSkybox(scene) {
     scene.background = new THREE.Color(0x020818);
 
     // Gradient dome — reduced segments for mobile perf
-    const domeGeo = new THREE.SphereGeometry(250, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2);
+    const domeGeo = new THREE.SphereGeometry(250, 28, 14, 0, Math.PI * 2, 0, Math.PI / 2);
     const domeMat = new THREE.ShaderMaterial({
         uniforms: { uTime: { value: 0 } },
         vertexShader: `

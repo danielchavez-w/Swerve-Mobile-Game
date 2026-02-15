@@ -8,7 +8,7 @@
 body {
     overflow: hidden;
     background: #020818;
-    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    font-family: 'Orbitron', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
     touch-action: none;
     user-select: none;
     -webkit-user-select: none;
@@ -112,7 +112,7 @@ body {
     color: #fff;
     font-size: 32px;
     font-weight: 800;
-    text-shadow: 0 0 12px rgba(0, 255, 200, 0.5), 0 0 24px rgba(0, 255, 200, 0.2);
+    text-shadow: 0 0 7px rgba(0, 255, 200, 0.8), 0 0 15px rgba(0, 255, 200, 0.5), 0 0 30px rgba(0, 255, 200, 0.3);
     transition: transform 0.15s;
     letter-spacing: 2px;
 }
@@ -130,6 +130,7 @@ body {
     font-size: 14px;
     font-weight: 600;
     letter-spacing: 1px;
+    text-shadow: 0 0 7px rgba(255, 255, 255, 0.3);
 }
 
 /* Level Up Notification */
@@ -148,7 +149,7 @@ body {
     font-size: 48px;
     font-weight: 900;
     letter-spacing: 4px;
-    text-shadow: 0 0 20px rgba(68, 255, 170, 0.8), 0 0 40px rgba(68, 255, 170, 0.4);
+    text-shadow: 0 0 7px rgba(68, 255, 170, 1), 0 0 20px rgba(68, 255, 170, 0.8), 0 0 40px rgba(68, 255, 170, 0.5), 0 0 80px rgba(68, 255, 170, 0.3);
     animation: levelUpAnim 1.5s ease-out forwards;
 }
 
@@ -180,8 +181,7 @@ body {
     font-size: 60px;
     font-weight: 900;
     letter-spacing: 10px;
-    text-transform: uppercase;
-    text-shadow: 0 0 20px rgba(0, 255, 170, 0.7), 0 0 40px rgba(0, 255, 170, 0.3), 0 0 80px rgba(0, 200, 255, 0.2);
+    text-shadow: 0 0 10px rgba(0, 255, 170, 0.9), 0 0 20px rgba(0, 255, 170, 0.7), 0 0 40px rgba(0, 255, 170, 0.4), 0 0 80px rgba(0, 200, 255, 0.3);
     margin-bottom: 20px;
 }
 
@@ -190,6 +190,7 @@ body {
     font-size: 16px;
     font-weight: 600;
     letter-spacing: 2px;
+    text-shadow: 0 0 7px rgba(255, 255, 255, 0.3);
     margin-bottom: 50px;
 }
 
@@ -198,6 +199,7 @@ body {
     font-size: 18px;
     font-weight: 700;
     letter-spacing: 4px;
+    text-shadow: 0 0 7px rgba(68, 255, 170, 0.9), 0 0 15px rgba(68, 255, 170, 0.5);
     animation: tapPulse 1.5s ease-in-out infinite;
 }
 
@@ -227,14 +229,16 @@ body {
     font-size: 44px;
     font-weight: 900;
     letter-spacing: 6px;
-    text-shadow: 0 0 20px rgba(255, 45, 107, 0.6);
+    text-shadow: 0 0 7px rgba(255, 45, 107, 0.9), 0 0 20px rgba(255, 45, 107, 0.6), 0 0 40px rgba(255, 45, 107, 0.3);
     margin-bottom: 30px;
 }
 
 #final-score-label {
     color: rgba(255, 255, 255, 0.5);
     font-size: 14px;
+    font-weight: 600;
     letter-spacing: 3px;
+    text-shadow: 0 0 7px rgba(255, 255, 255, 0.3);
     margin-bottom: 8px;
 }
 
@@ -243,7 +247,7 @@ body {
     font-size: 56px;
     font-weight: 900;
     letter-spacing: 4px;
-    text-shadow: 0 0 16px rgba(255, 255, 255, 0.5);
+    text-shadow: 0 0 7px rgba(255, 255, 255, 0.8), 0 0 16px rgba(255, 255, 255, 0.5), 0 0 30px rgba(255, 255, 255, 0.3);
     margin-bottom: 16px;
 }
 
@@ -252,6 +256,7 @@ body {
     font-size: 18px;
     font-weight: 600;
     letter-spacing: 2px;
+    text-shadow: 0 0 7px rgba(255, 255, 255, 0.3);
     margin-bottom: 50px;
 }
 
@@ -260,6 +265,7 @@ body {
     font-size: 18px;
     font-weight: 700;
     letter-spacing: 4px;
+    text-shadow: 0 0 7px rgba(68, 255, 170, 0.9), 0 0 15px rgba(68, 255, 170, 0.5);
     animation: tapPulse 1.5s ease-in-out infinite;
 }
 

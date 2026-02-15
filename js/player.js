@@ -18,7 +18,7 @@ let marbleGlow;
 let shadowMesh;
 
 function createMarbleTexture() {
-    const size = 256;
+    const size = 512;
     const canvas = document.createElement('canvas');
     canvas.width = size;
     canvas.height = size;
@@ -74,11 +74,14 @@ function createMarbleTexture() {
     const texture = new THREE.CanvasTexture(canvas);
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
+    texture.generateMipmaps = true;
+    texture.minFilter = THREE.LinearMipmapLinearFilter;
+    texture.magFilter = THREE.LinearFilter;
     return texture;
 }
 
 export function createMarble(scene, world, marbleMaterial) {
-    const geometry = new THREE.SphereGeometry(MARBLE_RADIUS, 20, 20);
+    const geometry = new THREE.SphereGeometry(MARBLE_RADIUS, 28, 28);
     const marbleTexture = createMarbleTexture();
 
     originalMaterial = new THREE.MeshStandardMaterial({
@@ -107,7 +110,7 @@ export function createMarble(scene, world, marbleMaterial) {
     marbleGlow = new THREE.PointLight(0xff66cc, 1.0, 6);
     scene.add(marbleGlow);
 
-    const shadowGeo = new THREE.CircleGeometry(MARBLE_RADIUS * 1.2, 16);
+    const shadowGeo = new THREE.CircleGeometry(MARBLE_RADIUS * 1.2, 24);
     const shadowMat = new THREE.MeshBasicMaterial({
         color: 0x000000,
         transparent: true,

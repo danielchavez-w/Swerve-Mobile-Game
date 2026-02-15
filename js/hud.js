@@ -31,7 +31,7 @@ export function updateScore(score) {
 }
 
 export function updateHighScore(highscore) {
-    highscoreEl.textContent = `HI: ${highscore}`;
+    highscoreEl.textContent = `hi: ${highscore}`;
 }
 
 export function updateLives(lives) {
@@ -59,7 +59,7 @@ export function hideGhostIndicator() {
 }
 
 export function showLevelUp(level) {
-    levelUpTextEl.textContent = `Level ${level}`;
+    levelUpTextEl.textContent = `level ${level}`;
     levelUpEl.classList.remove('hidden');
 
     // Re-trigger animation
@@ -82,7 +82,7 @@ export function hideHUD() {
 
 export function showTitleScreen(highscore) {
     titleScreen.classList.remove('hidden');
-    titleHighscore.textContent = `HIGH SCORE: ${highscore}`;
+    titleHighscore.textContent = `high score: ${highscore}`;
 }
 
 export function hideTitleScreen() {
@@ -92,7 +92,7 @@ export function hideTitleScreen() {
 export function showGameOver(score, highscore) {
     gameOverScreen.classList.remove('hidden');
     finalScore.textContent = score;
-    finalHighscore.textContent = `BEST: ${highscore}`;
+    finalHighscore.textContent = `best: ${highscore}`;
 }
 
 export function hideGameOver() {

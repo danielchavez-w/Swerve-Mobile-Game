@@ -10,14 +10,14 @@ export function initScene(container) {
     // Lighter fog with a neon blue tint — not too dark
     scene.fog = new THREE.FogExp2(0x061828, 0.008);
 
-    // Renderer — disable antialias on mobile for major perf gain
+    // Renderer — balanced quality: antialias on, pixel ratio capped at 2
     renderer = new THREE.WebGLRenderer({
-        antialias: !isMobile,
+        antialias: true,
         alpha: false,
         powerPreference: 'high-performance'
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.2;
@@ -51,6 +51,7 @@ function onResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 }
 
 export function getScene() { return scene; }
