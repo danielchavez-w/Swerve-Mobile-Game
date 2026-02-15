@@ -14,8 +14,8 @@ const TRACK_THICKNESS = 3;          // Physics only — keeps ball from tunnelin
 
 // ── Slope ──
 const START_Y = 10;
-const SLOPE_STEP = 0.08;
-const NUM_SLOPE_SEGS = 80;
+const SLOPE_STEP = 0.03;
+const NUM_SLOPE_SEGS = 220;
 
 // ── Ramp ──
 const RAMP_ANGLE = 0.25;                            // Radians upward

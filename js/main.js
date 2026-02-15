@@ -148,6 +148,16 @@ function startGame() {
     marbleBody.previousPosition.copy(marbleBody.position);
     marbleBody.interpolatedPosition.copy(marbleBody.position);
 
+    // Snap camera to correct position — prevents lerp-from-stale-position jitter
+    const camera = getCamera();
+    camera.position.set(
+        0,
+        marbleBody.position.y + cameraOffset.y,
+        marbleBody.position.z + cameraOffset.z
+    );
+    const lookTarget = new THREE.Vector3(0, marbleBody.position.y + 0.5, marbleBody.position.z + cameraLookAhead.z);
+    camera.lookAt(lookTarget);
+
     updateScore(score);
     updateHighScore(highScore);
     updateLives(lives);
@@ -256,9 +266,13 @@ function updatePlaying(dt, time) {
     // Step physics
     stepPhysics(dt);
 
-    // Ball must stay on the ground — kill any upward velocity
-    if (marbleBody.velocity.y > 0) {
+    // Ball must stay on the ground — dampen upward velocity.
+    // Use a threshold so the contact solver can do its micro-adjustments
+    // without creating an oscillation loop (which causes track jitter at low speeds).
+    if (marbleBody.velocity.y > 0.3) {
         marbleBody.velocity.y = 0;
+    } else if (marbleBody.velocity.y > 0) {
+        marbleBody.velocity.y *= 0.5;
     }
 
     // Update marble visual
@@ -343,7 +357,12 @@ function updateCamera(camera, marbleMesh, dt) {
 
     // Frame-rate-independent exponential decay — eliminates jitter from dt variation
     const smoothFactor = 1 - Math.exp(-cameraLerpSpeed * dt);
-    camera.position.lerp(_cameraTargetPos, smoothFactor);
+    // Much smoother Y tracking to absorb staircase slope transitions
+    const ySmoothFactor = 1 - Math.exp(-1.2 * dt);
+
+    camera.position.x += (_cameraTargetPos.x - camera.position.x) * smoothFactor;
+    camera.position.y += (_cameraTargetPos.y - camera.position.y) * ySmoothFactor;
+    camera.position.z += (_cameraTargetPos.z - camera.position.z) * smoothFactor;
 
     _cameraLookTarget.set(
         marbleMesh.position.x * 0.3,
