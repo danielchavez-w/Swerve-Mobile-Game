@@ -340,7 +340,10 @@ function updateCamera(camera, marbleMesh, dt) {
         marbleMesh.position.y + cameraOffset.y,
         marbleMesh.position.z + cameraOffset.z
     );
-    camera.position.lerp(_cameraTargetPos, cameraLerpSpeed * dt);
+
+    // Frame-rate-independent exponential decay — eliminates jitter from dt variation
+    const smoothFactor = 1 - Math.exp(-cameraLerpSpeed * dt);
+    camera.position.lerp(_cameraTargetPos, smoothFactor);
 
     _cameraLookTarget.set(
         marbleMesh.position.x * 0.3,

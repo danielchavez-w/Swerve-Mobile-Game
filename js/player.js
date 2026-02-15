@@ -137,12 +137,16 @@ export function createMarble(scene, world, marbleMaterial) {
 export function updateMarble(dt) {
     if (!marbleMesh || !marbleBody) return;
 
-    marbleMesh.position.copy(marbleBody.position);
-    marbleMesh.quaternion.copy(marbleBody.quaternion);
+    // Use interpolated position for smooth rendering between physics steps
+    const pos = marbleBody.interpolatedPosition;
+    const quat = marbleBody.interpolatedQuaternion;
 
-    marbleGlow.position.copy(marbleBody.position);
+    marbleMesh.position.copy(pos);
+    marbleMesh.quaternion.copy(quat);
 
-    shadowMesh.position.set(marbleBody.position.x, marbleBody.position.y - MARBLE_RADIUS + 0.02, marbleBody.position.z);
+    marbleGlow.position.copy(pos);
+
+    shadowMesh.position.set(pos.x, pos.y - MARBLE_RADIUS + 0.02, pos.z);
 
     if (ghostMode) {
         ghostTimer -= dt;
