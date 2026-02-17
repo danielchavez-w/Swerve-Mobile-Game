@@ -2,10 +2,10 @@
 
 const LEVELS = [
     { minScore: 0, level: 1, name: 'Easy', speedMultiplier: 1.0 },
-    { minScore: 500, level: 2, name: 'Medium', speedMultiplier: 1.15 },
-    { minScore: 1500, level: 3, name: 'Hard', speedMultiplier: 1.35 },
-    { minScore: 3000, level: 4, name: 'Very Hard', speedMultiplier: 1.6 },
-    { minScore: 5000, level: 5, name: 'Extreme', speedMultiplier: 1.9 }
+    { minScore: 150, level: 2, name: 'Medium', speedMultiplier: 1.15 },
+    { minScore: 600, level: 3, name: 'Hard', speedMultiplier: 1.3 },
+    { minScore: 1500, level: 4, name: 'Very Hard', speedMultiplier: 1.5 },
+    { minScore: 3000, level: 5, name: 'Extreme', speedMultiplier: 1.7 }
 ];
 
 let currentLevel = 1;

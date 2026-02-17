@@ -229,11 +229,11 @@ export function spawnObstacle(scene, world, zPos, trackWidth, difficultyLevel, t
 
 function getObstacleFrequency(level) {
     switch (level) {
-        case 1: return 0.25;
-        case 2: return 0.4;
-        case 3: return 0.55;
-        case 4: return 0.7;
-        case 5: return 0.8;
+        case 1: return 0.15;
+        case 2: return 0.25;
+        case 3: return 0.4;
+        case 4: return 0.55;
+        case 5: return 0.7;
         default: return 0.3;
     }
 }

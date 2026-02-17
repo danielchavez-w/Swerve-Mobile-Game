@@ -26,7 +26,7 @@ let highScore = 0;
 let lives = 3;
 let lastTime = 0;
 let gameTime = 0;
-const BASE_FORWARD_SPEED = -4;
+const BASE_FORWARD_SPEED = -22;
 const SEGMENTS_AHEAD = 25;
 
 // Camera follow parameters
@@ -35,9 +35,6 @@ const cameraLookAhead = new THREE.Vector3(0, 0, -12);
 const cameraLerpSpeed = 3.5;
 
 // Reusable objects to avoid per-frame allocations (reduces GC stutter)
-const _forceVec = new CANNON.Vec3();
-const _boostVec = new CANNON.Vec3();
-const _backwardVec = new CANNON.Vec3();
 const _cameraTargetPos = new THREE.Vector3();
 const _cameraLookTarget = new THREE.Vector3();
 const _marblePosVec = new THREE.Vector3();
@@ -239,27 +236,12 @@ function updatePlaying(dt, time) {
     const marbleMesh = getMarbleMesh();
     const camera = getCamera();
 
-    // Speed only changes on level-up, no gradual ramp
+    // Constant speed — only changes on level-up
     const speedMult = getSpeedMultiplier(score);
     const forwardSpeed = BASE_FORWARD_SPEED * speedMult;
-    const currentVZ = marbleBody.velocity.z;
 
-    // Gentle constant forward push
-    _forceVec.set(0, 0, -5 * speedMult);
-    marbleBody.applyForce(_forceVec, marbleBody.position);
-
-    // If going slower than target, nudge toward it (gentle boost)
-    if (currentVZ > forwardSpeed) {
-        _boostVec.set(0, 0, (forwardSpeed - currentVZ) * 2);
-        marbleBody.applyForce(_boostVec, marbleBody.position);
-    }
-
-    // NEVER allow backward movement
-    if (currentVZ > 0) {
-        marbleBody.velocity.z = 0;
-        _backwardVec.set(0, 0, -10);
-        marbleBody.applyForce(_backwardVec, marbleBody.position);
-    }
+    // Set forward velocity directly for constant, predictable speed
+    marbleBody.velocity.z = forwardSpeed;
 
     // Touch / trackpad / keyboard controls
     updateControls(dt);
