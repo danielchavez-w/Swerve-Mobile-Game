@@ -232,8 +232,10 @@ function getObstacleFrequency(level) {
         case 1: return 0.15;
         case 2: return 0.25;
         case 3: return 0.4;
-        case 4: return 0.55;
+        case 4: return 0.6;
         case 5: return 0.7;
+        case 6: return 0.8;
+        case 7: return 0.9;
         default: return 0.3;
     }
 }

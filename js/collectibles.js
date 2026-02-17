@@ -202,8 +202,10 @@ function getCollectibleDensity(level) {
         case 1: return 0.8;
         case 2: return 0.65;
         case 3: return 0.55;
-        case 4: return 0.4;
-        case 5: return 0.3;
+        case 4: return 0.7;
+        case 5: return 0.75;
+        case 6: return 0.85;
+        case 7: return 0.9;
         default: return 0.7;
     }
 }
