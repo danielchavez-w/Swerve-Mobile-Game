@@ -265,6 +265,16 @@ function updatePlaying(dt, time) {
     // Step physics
     stepPhysics(dt);
 
+    // Hard-clamp ball X inside the rails (prevents tunneling at any speed)
+    const TRACK_MAX_X = 3.35;   // halfW(4.5) - railHalfX(0.5) - marbleR(0.65)
+    if (marbleBody.position.x > TRACK_MAX_X) {
+        marbleBody.position.x = TRACK_MAX_X;
+        if (marbleBody.velocity.x > 0) marbleBody.velocity.x = 0;
+    } else if (marbleBody.position.x < -TRACK_MAX_X) {
+        marbleBody.position.x = -TRACK_MAX_X;
+        if (marbleBody.velocity.x < 0) marbleBody.velocity.x = 0;
+    }
+
     // Ball must stay on the ground — dampen upward velocity.
     // Use a threshold so the contact solver can do its micro-adjustments
     // without creating an oscillation loop (which causes track jitter at low speeds).

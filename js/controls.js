@@ -18,6 +18,12 @@ const JUMP_SPEED_BOOST = 3;        // Extra forward speed on jump
 // Keyboard
 const keys = {};
 
+// Track boundary — keep ball inside the rails
+const TRACK_HALF_W = 4.5;       // STANDARD_WIDTH / 2
+const RAIL_HALF_X = 0.5;        // RAIL_RADIUS * 2 (rail box half-extent in X)
+const MARBLE_R = 0.65;
+const MAX_X = TRACK_HALF_W - RAIL_HALF_X - MARBLE_R;  // ~3.35
+
 // Reusable vectors to avoid per-frame allocations
 const _unprojectVec = new THREE.Vector3();
 const _keyForceVec = new CANNON.Vec3();
@@ -144,19 +150,20 @@ export function updateControls(dt) {
 
     // ── Finger / mouse → ball: 1:1 world-space tracking ──
     if (isTouching) {
-        const targetX = fingerToWorldX();
+        const rawX = fingerToWorldX();
+        const targetX = Math.max(-MAX_X, Math.min(MAX_X, rawX));
         const dx = targetX - marbleBody.position.x;
 
         // Move ball to finger X in ~1 frame (exact tracking)
         marbleBody.velocity.x = dx / dt;
     }
 
-    // ── Keyboard ──
-    if (keys['KeyA'] || keys['ArrowLeft']) {
+    // ── Keyboard ── (skip force if already at rail boundary)
+    if ((keys['KeyA'] || keys['ArrowLeft']) && marbleBody.position.x > -MAX_X) {
         _keyForceVec.set(-200, 0, 0);
         marbleBody.applyForce(_keyForceVec, marbleBody.position);
     }
-    if (keys['KeyD'] || keys['ArrowRight']) {
+    if ((keys['KeyD'] || keys['ArrowRight']) && marbleBody.position.x < MAX_X) {
         _keyForceVec.set(200, 0, 0);
         marbleBody.applyForce(_keyForceVec, marbleBody.position);
     }
