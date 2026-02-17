@@ -145,18 +145,21 @@ body {
 }
 
 #level-up-text {
+    display: inline-block;
     color: #44ffaa;
     font-size: 48px;
     font-weight: 900;
     letter-spacing: 4px;
+    line-height: 1.1;
     text-shadow: 0 0 7px rgba(68, 255, 170, 1), 0 0 20px rgba(68, 255, 170, 0.8), 0 0 40px rgba(68, 255, 170, 0.5), 0 0 80px rgba(68, 255, 170, 0.3);
-    animation: levelUpAnim 1.5s ease-out forwards;
+    animation: levelUpAnim 3s ease-out forwards;
 }
 
 @keyframes levelUpAnim {
     0% { opacity: 0; transform: scale(0.5); }
-    20% { opacity: 1; transform: scale(1.1); }
-    40% { opacity: 1; transform: scale(1); }
+    10% { opacity: 1; transform: scale(1.1); }
+    20% { opacity: 1; transform: scale(1); }
+    80% { opacity: 1; transform: scale(1); }
     100% { opacity: 0; transform: scale(1) translateY(-30px); }
 }
 

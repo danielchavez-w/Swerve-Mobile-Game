@@ -59,7 +59,7 @@ export function hideGhostIndicator() {
 }
 
 export function showLevelUp(level) {
-    levelUpTextEl.textContent = `level ${level}`;
+    levelUpTextEl.innerHTML = `level<br>${level}`;
     levelUpEl.classList.remove('hidden');
 
     // Re-trigger animation
@@ -69,7 +69,7 @@ export function showLevelUp(level) {
 
     setTimeout(() => {
         levelUpEl.classList.add('hidden');
-    }, 1500);
+    }, 3000);
 }
 
 export function showHUD() {
