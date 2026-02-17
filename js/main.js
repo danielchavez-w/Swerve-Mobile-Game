@@ -113,11 +113,13 @@ function startGame() {
         const seg = generateSegment(scene, world, trackPhysMaterial, level);
         segmentsGenerated++;
 
-        if (i > 2) {
-            spawnCollectiblesForSegment(scene, seg.zPos, seg.width || 8, level, seg.endY);
-        }
+        // Spawn obstacle first so collectibles can be placed around it
+        let obstacle = null;
         if (i > 5) {
-            spawnObstacle(scene, world, seg.zPos, seg.width || 8, level, seg.endY);
+            obstacle = spawnObstacle(scene, world, seg.zPos, seg.width || 8, level, seg.endY);
+        }
+        if (i > 2) {
+            spawnCollectiblesForSegment(scene, seg.zPos, seg.width || 8, level, seg.endY, obstacle);
         }
     }
 
@@ -308,8 +310,8 @@ function updatePlaying(dt, time) {
         const seg = generateSegment(scene, world, trackPhysMaterial, level);
         segmentsGenerated++;
 
-        spawnCollectiblesForSegment(scene, seg.zPos, seg.width || 8, level, seg.endY);
-        spawnObstacle(scene, world, seg.zPos, seg.width || 8, level, seg.endY);
+        const obstacle = spawnObstacle(scene, world, seg.zPos, seg.width || 8, level, seg.endY);
+        spawnCollectiblesForSegment(scene, seg.zPos, seg.width || 8, level, seg.endY, obstacle);
 
         if (marbleZ - getLastSegmentZ() >= SEGMENTS_AHEAD * segLen) break;
     }

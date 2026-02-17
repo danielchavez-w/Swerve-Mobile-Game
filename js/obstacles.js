@@ -4,7 +4,7 @@ import { GROUPS } from './physics.js';
 
 const obstacles = [];
 
-const OBSTACLE_TYPES = {
+export const OBSTACLE_TYPES = {
     STATIC_WALL: 'static_wall',
     SWINGING_ARM: 'swinging_arm',
     SLIDING_BLOCK: 'sliding_block',
@@ -55,7 +55,7 @@ function createStaticWall(scene, world, zPos, trackWidth, trackY) {
     body.position.set(xOffset, trackY + wallHeight / 2, zPos);
     world.addBody(body);
 
-    const obstacle = { type: OBSTACLE_TYPES.STATIC_WALL, mesh, body, zPos, active: true };
+    const obstacle = { type: OBSTACLE_TYPES.STATIC_WALL, mesh, body, zPos, active: true, xOffset, wallWidth };
     obstacles.push(obstacle);
     return obstacle;
 }
@@ -191,7 +191,7 @@ function createLowBar(scene, world, zPos, trackWidth, trackY) {
 
     const obstacle = {
         type: OBSTACLE_TYPES.LOW_BAR,
-        mesh: group, body: leftBody, extraBodies: bodies, zPos, active: true
+        mesh: group, body: leftBody, extraBodies: bodies, zPos, active: true, gapWidth
     };
     obstacles.push(obstacle);
     return obstacle;

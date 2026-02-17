@@ -89,55 +89,107 @@ function createHoop(scene, x, y, z) {
     };
 }
 
-export function spawnCollectiblesForSegment(scene, segmentZ, trackWidth, difficultyLevel, trackY) {
+// Safe x-range the ball can actually reach (track half-width minus rail/margin)
+const SAFE_X = 3.0;
+
+function clampX(x) {
+    return Math.max(-SAFE_X, Math.min(SAFE_X, x));
+}
+
+// Find the safe x-lane to guide the player through/around an obstacle
+function getSafeLane(obstacle, trackWidth) {
+    if (!obstacle) return 0;
+
+    switch (obstacle.type) {
+        case 'static_wall': {
+            // Wall sits at xOffset with wallWidth — find the side with more open space
+            const wallLeft = obstacle.xOffset - obstacle.wallWidth / 2;
+            const wallRight = obstacle.xOffset + obstacle.wallWidth / 2;
+            const halfTrack = trackWidth / 2;
+            const leftSpace = wallLeft - (-halfTrack);
+            const rightSpace = halfTrack - wallRight;
+
+            if (leftSpace > rightSpace) {
+                // Open lane on the left
+                return clampX((-halfTrack + wallLeft) / 2);
+            } else {
+                // Open lane on the right
+                return clampX((wallRight + halfTrack) / 2);
+            }
+        }
+        case 'low_bar': {
+            // Gap is always centered at x=0
+            return 0;
+        }
+        case 'swinging_arm': {
+            // Arm swings ±3 around center — safest at far edges
+            return (Math.random() < 0.5 ? -1 : 1) * SAFE_X;
+        }
+        case 'sliding_block': {
+            // Block slides across most of the track — pick an edge
+            return (Math.random() < 0.5 ? -1 : 1) * SAFE_X;
+        }
+        default:
+            return 0;
+    }
+}
+
+export function spawnCollectiblesForSegment(scene, segmentZ, trackWidth, difficultyLevel, trackY, obstacle) {
     const density = getCollectibleDensity(difficultyLevel);
     const spawned = [];
     const y = trackY || 0;
 
-    // Point dots — line pattern
+    // Decide if we spawn dots this segment
     if (Math.random() < density) {
-        const pattern = Math.random();
-        const numDots = 3 + Math.floor(Math.random() * 4);
+        const safeX = getSafeLane(obstacle, trackWidth);
+        const numDots = 4 + Math.floor(Math.random() * 3); // 4–6 dots
 
-        if (pattern < 0.4) {
-            const x = (Math.random() - 0.5) * (trackWidth - 2);
+        if (obstacle) {
+            // Obstacle-aware trail — straight line through safe lane
             for (let i = 0; i < numDots; i++) {
-                const z = segmentZ + (i - numDots / 2) * 2;
-                const c = createDot(scene, x, y, z);
-                collectibles.push(c);
-                spawned.push(c);
-            }
-        } else if (pattern < 0.7) {
-            for (let i = 0; i < numDots; i++) {
-                const x = (i % 2 === 0 ? -1 : 1) * (1 + Math.random());
                 const z = segmentZ + (i - numDots / 2) * 2.5;
-                const c = createDot(scene, x, y, z);
+                const c = createDot(scene, safeX, y, z);
                 collectibles.push(c);
                 spawned.push(c);
             }
         } else {
-            for (let i = 0; i < numDots; i++) {
-                const angle = (i / numDots) * Math.PI;
-                const x = Math.cos(angle) * 2;
-                const z = segmentZ + (i - numDots / 2) * 2;
-                const c = createDot(scene, x, y, z);
-                collectibles.push(c);
-                spawned.push(c);
+            // No obstacle — clean trail with slight variation
+            const pattern = Math.random();
+            if (pattern < 0.5) {
+                // Straight line with a small random offset from center
+                const xBase = clampX((Math.random() - 0.5) * 3);
+                for (let i = 0; i < numDots; i++) {
+                    const z = segmentZ + (i - numDots / 2) * 2.5;
+                    const c = createDot(scene, xBase, y, z);
+                    collectibles.push(c);
+                    spawned.push(c);
+                }
+            } else {
+                // Gentle wave trail
+                const xCenter = clampX((Math.random() - 0.5) * 2);
+                for (let i = 0; i < numDots; i++) {
+                    const x = clampX(xCenter + Math.sin(i * 0.8) * 1.5);
+                    const z = segmentZ + (i - numDots / 2) * 2.5;
+                    const c = createDot(scene, x, y, z);
+                    collectibles.push(c);
+                    spawned.push(c);
+                }
             }
         }
     }
 
-    // Diamond — rarer
+    // Diamond — rarer, placed on safe lane
     if (Math.random() < density * 0.3) {
-        const x = (Math.random() - 0.5) * (trackWidth - 2);
-        const c = createDiamond(scene, x, y, segmentZ);
+        const safeX = obstacle ? getSafeLane(obstacle, trackWidth) : clampX((Math.random() - 0.5) * 3);
+        const c = createDiamond(scene, safeX, y, segmentZ);
         collectibles.push(c);
         spawned.push(c);
     }
 
-    // Hoop — rarest
+    // Hoop — rarest, placed on safe lane
     if (Math.random() < density * 0.15) {
-        const c = createHoop(scene, 0, y, segmentZ);
+        const safeX = obstacle ? getSafeLane(obstacle, trackWidth) : 0;
+        const c = createHoop(scene, safeX, y, segmentZ);
         collectibles.push(c);
         spawned.push(c);
     }
