@@ -210,7 +210,7 @@ function getCollectibleDensity(level) {
     }
 }
 
-export function updateCollectibles(time, marblePos, marbleRadius) {
+export function updateCollectibles(time, marblePos, marbleRadius, canCollect = true) {
     let pointsEarned = 0;
     const now = performance.now();
 
@@ -238,6 +238,9 @@ export function updateCollectibles(time, marblePos, marbleRadius) {
         } else if (c.type === COLLECTIBLE_TYPES.HOOP) {
             c.mesh.rotation.y = Math.sin(time * 0.8 + c.zPos) * 0.15;
         }
+
+        // Skip collection during ghost mode
+        if (!canCollect) continue;
 
         // Collision detection
         const dist = marblePos.distanceTo(c.mesh.position);

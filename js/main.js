@@ -309,9 +309,9 @@ function updatePlaying(dt, time) {
     // Update obstacles (animations)
     updateObstacles(time);
 
-    // Update collectibles and check collections
+    // Update collectibles and check collections (skip during ghost mode)
     _marblePosVec.copy(marbleBody.position);
-    const pointsEarned = updateCollectibles(time, _marblePosVec, getMarbleRadius());
+    const pointsEarned = updateCollectibles(time, _marblePosVec, getMarbleRadius(), !isGhostMode());
 
     if (pointsEarned > 0) {
         score += pointsEarned;
