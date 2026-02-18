@@ -336,6 +336,7 @@ function updatePlaying(dt, time) {
         if (score > highScore) {
             highScore = score;
             updateHighScore(highScore);
+            localStorage.setItem('swerve_highScore', highScore.toString());
         }
     }
 
