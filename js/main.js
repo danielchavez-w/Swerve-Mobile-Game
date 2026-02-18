@@ -26,6 +26,7 @@ let highScore = 0;
 let lives = 3;
 let lastTime = 0;
 let gameTime = 0;
+let isFirstGame = true;
 const BASE_FORWARD_SPEED = -22;
 const SEGMENTS_AHEAD = 25;
 
@@ -167,6 +168,11 @@ function startGame() {
     showLevelUp(1);
     lastTime = performance.now();
     gameState = STATES.PLAYING;
+
+    if (isFirstGame) {
+        isFirstGame = false;
+        showTutorial();
+    }
 }
 
 function onMarbleCollide(event) {
@@ -363,6 +369,28 @@ function updateCamera(camera, marbleMesh, dt) {
         marbleMesh.position.z + cameraLookAhead.z
     );
     camera.lookAt(_cameraLookTarget);
+}
+
+function showTutorial() {
+    const overlay = document.getElementById('tutorial-overlay');
+    overlay.classList.remove('hidden');
+    overlay.classList.add('active');
+
+    const dismiss = () => {
+        overlay.classList.remove('active');
+        overlay.style.display = 'none';
+        document.removeEventListener('touchstart', dismiss);
+        document.removeEventListener('click', dismiss);
+    };
+
+    // Remove when animation ends naturally
+    overlay.addEventListener('animationend', dismiss, { once: true });
+
+    // Also dismiss on touch — defer so the starting tap doesn't trigger it
+    requestAnimationFrame(() => {
+        document.addEventListener('touchstart', dismiss);
+        document.addEventListener('click', dismiss);
+    });
 }
 
 // Start the game

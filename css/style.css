@@ -272,6 +272,39 @@ body {
     animation: tapPulse 1.5s ease-in-out infinite;
 }
 
+/* Tutorial Overlay */
+#tutorial-overlay {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 72%;
+    z-index: 15;
+    pointer-events: none;
+    text-align: center;
+    display: none;
+}
+
+#tutorial-overlay.active {
+    display: block;
+    animation: tutorialFade 6s ease-in-out forwards;
+}
+
+#tutorial-text {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    line-height: 1.8;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+@keyframes tutorialFade {
+    0% { opacity: 0; }
+    8% { opacity: 1; }
+    75% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
 /* Screen shake */
 .screen-shake {
     animation: shake 0.3s ease-out;
