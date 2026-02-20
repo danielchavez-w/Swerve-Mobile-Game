@@ -6,12 +6,17 @@ const collectibles = [];
 const dotGeo = new THREE.SphereGeometry(0.2, 12, 12);
 const diamondGeo = new THREE.OctahedronGeometry(0.35, 1);
 const hoopGeo = new THREE.TorusGeometry(1.5, 0.12, 12, 32);
+const boostGeo = (() => {
+    const geo = new THREE.ConeGeometry(0.3, 0.7, 8);
+    geo.rotateX(-Math.PI / 2); // Point forward (-Z)
+    return geo;
+})();
 
 // Shared materials
 const dotMaterial = new THREE.MeshStandardMaterial({
-    color: 0x00ffaa,
-    emissive: 0x00ff88,
-    emissiveIntensity: 0.6,
+    color: 0x00ccff,
+    emissive: 0x0088ff,
+    emissiveIntensity: 0.7,
     roughness: 0.3,
     metalness: 0.4
 });
@@ -34,10 +39,19 @@ const hoopMaterial = new THREE.MeshStandardMaterial({
     opacity: 0.8
 });
 
+const boostMaterial = new THREE.MeshStandardMaterial({
+    color: 0x39ff14,
+    emissive: 0x00ff00,
+    emissiveIntensity: 1.0,
+    roughness: 0.2,
+    metalness: 0.5
+});
+
 export const COLLECTIBLE_TYPES = {
     DOT: 'dot',
     DIAMOND: 'diamond',
-    HOOP: 'hoop'
+    HOOP: 'hoop',
+    BOOST: 'boost'
 };
 
 function createDot(scene, x, y, z) {
@@ -86,6 +100,22 @@ function createHoop(scene, x, y, z) {
         collectTime: 0,
         points: 100,
         innerRadius: 1.5
+    };
+}
+
+function createBoost(scene, x, y, z) {
+    const mesh = new THREE.Mesh(boostGeo, boostMaterial);
+    mesh.position.set(x, y + 0.6, z);
+    scene.add(mesh);
+
+    return {
+        type: COLLECTIBLE_TYPES.BOOST,
+        mesh,
+        zPos: z,
+        baseY: y,
+        collected: false,
+        collectTime: 0,
+        points: 25
     };
 }
 
@@ -194,6 +224,14 @@ export function spawnCollectiblesForSegment(scene, segmentZ, trackWidth, difficu
         spawned.push(c);
     }
 
+    // Boost — rarer than dots, similar to diamonds
+    if (Math.random() < density * 0.2) {
+        const safeX = obstacle ? getSafeLane(obstacle, trackWidth) : clampX((Math.random() - 0.5) * 3);
+        const c = createBoost(scene, safeX, y, segmentZ);
+        collectibles.push(c);
+        spawned.push(c);
+    }
+
     return spawned;
 }
 
@@ -212,6 +250,7 @@ function getCollectibleDensity(level) {
 
 export function updateCollectibles(time, marblePos, marbleRadius, canCollect = true) {
     let pointsEarned = 0;
+    let boostCollected = false;
     const now = performance.now();
 
     for (const c of collectibles) {
@@ -237,6 +276,9 @@ export function updateCollectibles(time, marblePos, marbleRadius, canCollect = t
             c.mesh.position.y = c.baseY + 0.5 + Math.sin(time * 3 + c.zPos) * 0.1;
         } else if (c.type === COLLECTIBLE_TYPES.HOOP) {
             c.mesh.rotation.y = Math.sin(time * 0.8 + c.zPos) * 0.15;
+        } else if (c.type === COLLECTIBLE_TYPES.BOOST) {
+            c.mesh.rotation.y = time * 3;
+            c.mesh.position.y = c.baseY + 0.6 + Math.sin(time * 2.5 + c.zPos) * 0.15;
         }
 
         // Skip collection during ghost mode
@@ -251,6 +293,10 @@ export function updateCollectibles(time, marblePos, marbleRadius, canCollect = t
         } else if (c.type === COLLECTIBLE_TYPES.DIAMOND && dist < marbleRadius + 0.5) {
             collectItem(c);
             pointsEarned += c.points;
+        } else if (c.type === COLLECTIBLE_TYPES.BOOST && dist < marbleRadius + 0.45) {
+            collectItem(c);
+            pointsEarned += c.points;
+            boostCollected = true;
         } else if (c.type === COLLECTIBLE_TYPES.HOOP) {
             const hoopPos = c.mesh.position;
             const dz = Math.abs(marblePos.z - hoopPos.z);
@@ -265,7 +311,7 @@ export function updateCollectibles(time, marblePos, marbleRadius, canCollect = t
         }
     }
 
-    return pointsEarned;
+    return { points: pointsEarned, boost: boostCollected };
 }
 
 function collectItem(c) {

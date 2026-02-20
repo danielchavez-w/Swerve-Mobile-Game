@@ -11,7 +11,7 @@ import { spawnCollectiblesForSegment, updateCollectibles, removeOldCollectibles,
 import { initHUD, updateScore, updateHighScore, updateLives, showGhostIndicator, hideGhostIndicator, showLevelUp, showHUD, hideHUD, showTitleScreen, hideTitleScreen, showGameOver, hideGameOver, screenShake, hitFlash, getRestartButton, getTitleScreen } from './hud.js';
 import { getDifficultyForScore, checkLevelUp, getSpeedMultiplier, resetDifficulty } from './difficulty.js';
 import { createSkybox, updateSkybox } from './skybox.js';
-import { initAudio, resumeAudio, playCollectSound, playDiamondSound, playHoopSound, playHitSound, playGameOverSound, playLevelUpSound } from './audio.js';
+import { initAudio, resumeAudio, playCollectSound, playDiamondSound, playHoopSound, playHitSound, playGameOverSound, playLevelUpSound, playBoostSound } from './audio.js';
 
 // Game states
 const STATES = {
@@ -29,6 +29,12 @@ let gameTime = 0;
 let isFirstGame = true;
 const BASE_FORWARD_SPEED = -22;
 const SEGMENTS_AHEAD = 25;
+
+// Boost state
+let boostActive = false;
+let boostTimer = 0;
+const BOOST_DURATION = 1.5;
+const BOOST_SPEED_MULT = 1.8;
 
 // Camera follow parameters
 const cameraOffset = new THREE.Vector3(0, 5, 8);
@@ -104,6 +110,8 @@ function startGame() {
     lives = 3;
     segmentsGenerated = 0;
     gameTime = 0;
+    boostActive = false;
+    boostTimer = 0;
 
     // Generate initial track first, so we know the Y
     for (let i = 0; i < SEGMENTS_AHEAD; i++) {
@@ -244,7 +252,16 @@ function updatePlaying(dt, time) {
 
     // Constant speed — only changes on level-up
     const speedMult = getSpeedMultiplier(score);
-    const forwardSpeed = BASE_FORWARD_SPEED * speedMult;
+
+    // Boost timer countdown
+    if (boostActive) {
+        boostTimer -= dt;
+        if (boostTimer <= 0) {
+            boostActive = false;
+        }
+    }
+
+    const forwardSpeed = BASE_FORWARD_SPEED * speedMult * (boostActive ? BOOST_SPEED_MULT : 1);
 
     // Set forward velocity directly for constant, predictable speed
     marbleBody.velocity.z = forwardSpeed;
@@ -317,14 +334,20 @@ function updatePlaying(dt, time) {
 
     // Update collectibles and check collections (skip during ghost mode)
     _marblePosVec.copy(marbleBody.position);
-    const pointsEarned = updateCollectibles(time, _marblePosVec, getMarbleRadius(), !isGhostMode());
+    const collectResult = updateCollectibles(time, _marblePosVec, getMarbleRadius(), !isGhostMode());
 
-    if (pointsEarned > 0) {
-        score += pointsEarned;
+    if (collectResult.boost) {
+        boostActive = true;
+        boostTimer = BOOST_DURATION;
+        playBoostSound();
+    }
+
+    if (collectResult.points > 0) {
+        score += collectResult.points;
         updateScore(score);
 
-        if (pointsEarned >= 100) playHoopSound();
-        else if (pointsEarned >= 50) playDiamondSound();
+        if (collectResult.points >= 100) playHoopSound();
+        else if (collectResult.points >= 50) playDiamondSound();
         else playCollectSound();
 
         const levelUp = checkLevelUp(score);

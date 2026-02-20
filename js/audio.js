@@ -75,3 +75,23 @@ export function playLevelUpSound() {
     setTimeout(() => playTone(784, 0.15, 'sine', 0.2), 200);
     setTimeout(() => playTone(1047, 0.3, 'sine', 0.15), 300);
 }
+
+export function playBoostSound() {
+    if (!initialized) return;
+
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.2);
+
+    gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+
+    osc.connect(gain);
+    gain.connect(masterGain);
+
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + 0.3);
+}
