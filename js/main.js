@@ -9,7 +9,7 @@ import { initRails, updateRails } from './rails.js';
 import { spawnObstacle, updateObstacles, removeOldObstacles, resetObstacles } from './obstacles.js';
 import { spawnCollectiblesForSegment, updateCollectibles, removeOldCollectibles, resetCollectibles } from './collectibles.js';
 import { initHUD, updateScore, updateHighScore, updateLives, showGhostIndicator, hideGhostIndicator, showLevelUp, showHUD, hideHUD, showTitleScreen, hideTitleScreen, showGameOver, hideGameOver, screenShake, hitFlash, getRestartButton, getTitleScreen } from './hud.js';
-import { getDifficultyForScore, checkLevelUp, getSpeedMultiplier, resetDifficulty } from './difficulty.js';
+import { getDifficultyForScore, checkLevelUp, getSpeedMultiplier, getCurrentLevel, resetDifficulty } from './difficulty.js';
 import { createSkybox, updateSkybox } from './skybox.js';
 import { initAudio, resumeAudio, playCollectSound, playDiamondSound, playHoopSound, playHitSound, playGameOverSound, playLevelUpSound, playBoostSound } from './audio.js';
 
@@ -36,10 +36,19 @@ let boostTimer = 0;
 const BOOST_DURATION = 0.5;
 const BOOST_SPEED_MULT = 1.3;
 
-// Hit slowdown state
+// Hit slowdown state — longer recovery at higher levels to balance fast base speeds
 let hitSlowActive = false;
 let hitSlowTimer = 0;
-const HIT_SLOW_DURATION = 2.0;
+let hitSlowDuration = 2.0;
+const HIT_SLOW_DURATIONS = {
+    1: 2.0,
+    2: 2.0,
+    3: 2.0,
+    4: 3.0,
+    5: 3.5,
+    6: 4.0,
+    7: 4.5
+};
 const HIT_SLOW_MIN = 0.4; // Drops to 40% speed on hit
 
 // Camera follow parameters
@@ -217,7 +226,8 @@ function takeDamage() {
 
     enterGhostMode();
     hitSlowActive = true;
-    hitSlowTimer = HIT_SLOW_DURATION;
+    hitSlowDuration = HIT_SLOW_DURATIONS[getCurrentLevel()] || 2.0;
+    hitSlowTimer = hitSlowDuration;
 }
 
 function gameOver() {
@@ -278,7 +288,7 @@ function updatePlaying(dt, time) {
         if (hitSlowTimer <= 0) {
             hitSlowActive = false;
         } else {
-            const progress = 1 - (hitSlowTimer / HIT_SLOW_DURATION);
+            const progress = 1 - (hitSlowTimer / hitSlowDuration);
             hitSlowMult = HIT_SLOW_MIN + (1 - HIT_SLOW_MIN) * progress;
         }
     }
