@@ -224,8 +224,8 @@ export function spawnCollectiblesForSegment(scene, segmentZ, trackWidth, difficu
         spawned.push(c);
     }
 
-    // Boost — rarer than dots, similar to diamonds
-    if (Math.random() < density * 0.2) {
+    // Boost — introduced at level 3, rarer than dots, similar to diamonds
+    if (difficultyLevel >= 3 && Math.random() < density * 0.2) {
         const safeX = obstacle ? getSafeLane(obstacle, trackWidth) : clampX((Math.random() - 0.5) * 3);
         const c = createBoost(scene, safeX, y, segmentZ);
         collectibles.push(c);
