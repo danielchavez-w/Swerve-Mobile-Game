@@ -36,6 +36,12 @@ let boostTimer = 0;
 const BOOST_DURATION = 0.5;
 const BOOST_SPEED_MULT = 1.3;
 
+// Hit slowdown state
+let hitSlowActive = false;
+let hitSlowTimer = 0;
+const HIT_SLOW_DURATION = 2.0;
+const HIT_SLOW_MIN = 0.4; // Drops to 40% speed on hit
+
 // Camera follow parameters
 const cameraOffset = new THREE.Vector3(0, 5, 8);
 const cameraLookAhead = new THREE.Vector3(0, 0, -12);
@@ -112,6 +118,8 @@ function startGame() {
     gameTime = 0;
     boostActive = false;
     boostTimer = 0;
+    hitSlowActive = false;
+    hitSlowTimer = 0;
 
     // Generate initial track first, so we know the Y
     for (let i = 0; i < SEGMENTS_AHEAD; i++) {
@@ -208,6 +216,8 @@ function takeDamage() {
     }
 
     enterGhostMode();
+    hitSlowActive = true;
+    hitSlowTimer = HIT_SLOW_DURATION;
 }
 
 function gameOver() {
@@ -261,7 +271,19 @@ function updatePlaying(dt, time) {
         }
     }
 
-    const forwardSpeed = BASE_FORWARD_SPEED * speedMult * (boostActive ? BOOST_SPEED_MULT : 1);
+    // Hit slowdown — gradually ramp from HIT_SLOW_MIN back to 1.0
+    let hitSlowMult = 1;
+    if (hitSlowActive) {
+        hitSlowTimer -= dt;
+        if (hitSlowTimer <= 0) {
+            hitSlowActive = false;
+        } else {
+            const progress = 1 - (hitSlowTimer / HIT_SLOW_DURATION);
+            hitSlowMult = HIT_SLOW_MIN + (1 - HIT_SLOW_MIN) * progress;
+        }
+    }
+
+    const forwardSpeed = BASE_FORWARD_SPEED * speedMult * (boostActive ? BOOST_SPEED_MULT : 1) * hitSlowMult;
 
     // Set forward velocity directly for constant, predictable speed
     marbleBody.velocity.z = forwardSpeed;
