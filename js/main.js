@@ -33,8 +33,8 @@ const SEGMENTS_AHEAD = 25;
 // Boost state
 let boostActive = false;
 let boostTimer = 0;
-const BOOST_DURATION = 1.5;
-const BOOST_SPEED_MULT = 1.8;
+const BOOST_DURATION = 0.5;
+const BOOST_SPEED_MULT = 1.3;
 
 // Camera follow parameters
 const cameraOffset = new THREE.Vector3(0, 5, 8);
