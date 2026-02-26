@@ -20,10 +20,40 @@ const armMaterial = new THREE.MeshStandardMaterial({
     color: 0xff8800, emissive: 0xff4400, emissiveIntensity: 0.5,
     roughness: 0.4, metalness: 0.4
 });
-const blockMaterial = new THREE.MeshStandardMaterial({
-    color: 0xaa00ff, emissive: 0x6600aa, emissiveIntensity: 0.5,
-    roughness: 0.4, metalness: 0.3
-});
+const blockMaterial = (() => {
+    const size = 128;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+
+    // Red background
+    ctx.fillStyle = '#cc1122';
+    ctx.fillRect(0, 0, size, size);
+
+    // Thick white X
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 18;
+    ctx.lineCap = 'round';
+    const pad = 24;
+    ctx.beginPath();
+    ctx.moveTo(pad, pad);
+    ctx.lineTo(size - pad, size - pad);
+    ctx.moveTo(size - pad, pad);
+    ctx.lineTo(pad, size - pad);
+    ctx.stroke();
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.minFilter = THREE.LinearFilter;
+
+    return new THREE.MeshStandardMaterial({
+        map: tex,
+        emissive: 0xcc0011,
+        emissiveIntensity: 0.5,
+        roughness: 0.4,
+        metalness: 0.3
+    });
+})();
 const barMaterial = new THREE.MeshStandardMaterial({
     color: 0xff4400, emissive: 0xff2200, emissiveIntensity: 0.5,
     roughness: 0.4, metalness: 0.4
