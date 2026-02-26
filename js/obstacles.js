@@ -12,10 +12,64 @@ export const OBSTACLE_TYPES = {
 };
 
 // Shared materials
-const wallMaterial = new THREE.MeshStandardMaterial({
-    color: 0xff2244, emissive: 0xff0022, emissiveIntensity: 0.5,
-    roughness: 0.5, metalness: 0.3
-});
+const wallMaterial = (() => {
+    const w = 256;
+    const h = 128;
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+
+    // Mortar background
+    ctx.fillStyle = '#3a2a2a';
+    ctx.fillRect(0, 0, w, h);
+
+    // Brick dimensions
+    const brickH = 16;
+    const brickW = 40;
+    const gap = 3;
+    const rows = Math.ceil(h / (brickH + gap));
+    const cols = Math.ceil(w / (brickW + gap)) + 1;
+
+    for (let row = 0; row < rows; row++) {
+        const offsetX = (row % 2 === 1) ? (brickW + gap) / 2 : 0;
+        for (let col = -1; col < cols; col++) {
+            const x = col * (brickW + gap) + offsetX;
+            const y = row * (brickH + gap);
+            // Vary brick color slightly
+            const r = 160 + Math.floor(Math.random() * 40);
+            const g = 30 + Math.floor(Math.random() * 20);
+            const b = 20 + Math.floor(Math.random() * 15);
+            ctx.fillStyle = `rgb(${r},${g},${b})`;
+            ctx.fillRect(x, y, brickW, brickH);
+        }
+    }
+
+    // White X overlay
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 10;
+    ctx.lineCap = 'round';
+    ctx.globalAlpha = 0.85;
+    const pad = 16;
+    ctx.beginPath();
+    ctx.moveTo(pad, pad);
+    ctx.lineTo(w - pad, h - pad);
+    ctx.moveTo(w - pad, pad);
+    ctx.lineTo(pad, h - pad);
+    ctx.stroke();
+    ctx.globalAlpha = 1.0;
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.minFilter = THREE.LinearFilter;
+
+    return new THREE.MeshStandardMaterial({
+        map: tex,
+        emissive: 0x881111,
+        emissiveIntensity: 0.4,
+        roughness: 0.7,
+        metalness: 0.1
+    });
+})();
 const armMaterial = new THREE.MeshStandardMaterial({
     color: 0xff8800, emissive: 0xff4400, emissiveIntensity: 0.5,
     roughness: 0.4, metalness: 0.4
