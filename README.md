@@ -26,7 +26,7 @@ The track is loaded with pickups. Grab everything you can.
 1. **Point Dots (10 pts):** Small neon blue spheres scattered along the track in lines and wave patterns. The bread and butter of your score.
 2. **Speed Boost (25 pts):** Green glowing cones that give a short burst of speed when collected. Appear starting at level 3.
 3. **Diamonds (50 pts):** Rotating golden gems placed at tricky spots. Risk meets reward.
-4. **Aerial Hoops (100 pts):** Glowing pink rings floating above the track. Thread through the hoop for big points.
+4. **Neon Arches (100 pts):** Glowing yellow arches standing on the track. Roll through the arch for big points.
 
 ### 🚧 Obstacles & Ghost Mode
 
@@ -53,15 +53,15 @@ The game gets harder the better you play. As your score climbs, expect:
 * **More barriers** — obstacles appear more frequently.
 * **Longer hit slowdowns** — recovery from hits takes longer at higher levels.
 
-| Score | Level | Speed | What Changes |
-| :--- | :--- | :--- | :--- |
-| 0 – 499 | Easy | 1.0x | Slow speed, few obstacles, lots of pickups |
-| 500 – 1,499 | Medium | 1.15x | Speed increases, more obstacles |
-| 1,500 – 2,499 | Hard | 1.3x | Frequent barriers, speed boosts start appearing |
-| 2,500 – 3,999 | Very Hard | 1.55x | High speed, dense obstacles |
-| 4,000 – 5,999 | Extreme | 1.8x | Very fast, obstacles everywhere |
-| 6,000 – 7,999 | Insane | 2.1x | Relentless speed and obstacle density |
-| 8,000+ | Nightmare | 2.4x | Maximum speed. Good luck. |
+| Level | Name | Score | Speed | What Changes |
+| :--- | :--- | :--- | :--- | :--- |
+| 1 | Easy | 0 – 499 | 1.0x | Slow speed, few obstacles, lots of pickups |
+| 2 | Medium | 500 – 1,499 | 1.15x | Speed increases, more obstacles |
+| 3 | Hard | 1,500 – 2,499 | 1.3x | Frequent barriers, speed boosts start appearing |
+| 4 | Very Hard | 2,500 – 3,999 | 1.55x | High speed, dense obstacles |
+| 5 | Extreme | 4,000 – 5,999 | 1.8x | Very fast, obstacles everywhere |
+| 6 | Insane | 6,000 – 7,999 | 2.1x | Relentless speed and obstacle density |
+| 7 | Nightmare | 8,000+ | 2.4x | Maximum speed. Good luck. |
 
 ### 🌌 Setting
 
@@ -86,6 +86,12 @@ The entire game takes place under a **night sky with northern lights**. Stars tw
 > *"The speed boost collectible went through a few rounds of tuning. The first version was way too strong — it launched you forward and you'd slam into the next obstacle before you could react. We dialed it down to a 1.3x burst for half a second, just enough to feel the kick without losing control. Delaying it to level 3 also helped — by the time it shows up, the player already knows how the track feels at speed."*
 
 > *"Hit slowdown was the last big balancing pass. Before it existed, getting hit at level 6 or 7 was basically a death sentence — you'd respawn at full speed into another obstacle. Dropping the ball to 40% speed on hit and ramping it back up gives you a window to recover and reposition. The ramp-up duration scales with level — 2 seconds early on, up to 4.5 at Nightmare — so the safety net grows with the difficulty."*
+
+> *"The obstacles needed to read instantly at speed. A plain colored box doesn't scream 'danger' when it's flying toward you at 2x. Putting a brick texture on the static walls and a bold white X on the sliding blocks made them unmistakable — you see the X and your brain says 'avoid' before you even think about it."*
+
+> *"The hoops used to be flat pink rings floating in the air. They looked like decorations, not rewards. Replacing them with neon yellow arches planted on the track made the 100-point pickup feel like a real gateway — something you aim for and drive through, not something you accidentally clip."*
+
+> *"Mobile performance was stuttering near arches and at game start. Two culprits: every arch was spawning a dynamic PointLight, and the GPU was compiling shaders on the first frame they appeared. Killing the PointLights in favor of emissive materials and adding a shader warm-up pass during init — one off-screen render of every material — eliminated both hitches completely."*
 
 ---
 
