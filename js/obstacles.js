@@ -351,6 +351,10 @@ export function removeOldObstacles(scene, world, marbleZ) {
 
 export function getObstacles() { return obstacles; }
 
+export function getObstacleMaterials() {
+    return [wallMaterial, armMaterial, blockMaterial, barMaterial];
+}
+
 export function resetObstacles(scene, world) {
     for (const obs of obstacles) {
         scene.remove(obs.mesh);

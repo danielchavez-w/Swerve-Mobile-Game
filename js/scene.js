@@ -54,6 +54,22 @@ function onResize() {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 }
 
+// Pre-compile all shader programs so the first gameplay frame doesn't stall
+export function warmUpGPU(materials) {
+    const tempGeo = new THREE.PlaneGeometry(1, 1);
+    const tempMeshes = materials.map(mat => {
+        const m = new THREE.Mesh(tempGeo, mat);
+        m.position.set(0, -100, 0); // Off-screen
+        scene.add(m);
+        return m;
+    });
+
+    renderer.render(scene, camera);
+
+    for (const m of tempMeshes) scene.remove(m);
+    tempGeo.dispose();
+}
+
 export function getScene() { return scene; }
 export function getCamera() { return camera; }
 export function getRenderer() { return renderer; }

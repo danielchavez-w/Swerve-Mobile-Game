@@ -31,10 +31,10 @@ const diamondMaterial = new THREE.MeshStandardMaterial({
 
 const hoopMaterial = new THREE.MeshStandardMaterial({
     color: 0xffee00,
-    emissive: 0xffcc00,
-    emissiveIntensity: 1.0,
-    roughness: 0.2,
-    metalness: 0.5
+    emissive: 0xffdd00,
+    emissiveIntensity: 1.2,
+    roughness: 0.15,
+    metalness: 0.6
 });
 
 const boostMaterial = new THREE.MeshStandardMaterial({
@@ -85,24 +85,13 @@ function createDiamond(scene, x, y, z) {
 }
 
 function createHoop(scene, x, y, z) {
-    const group = new THREE.Group();
-
-    // Half-torus arch — feet on the ground, curves over the top
-    const arch = new THREE.Mesh(hoopGeo, hoopMaterial);
-    group.add(arch);
-
-    // Neon glow light at the top of the arch
-    const glow = new THREE.PointLight(0xffee00, 1.5, 6);
-    glow.position.set(0, 2.0, 0);
-    group.add(glow);
-
-    group.position.set(x, y, z);
-    scene.add(group);
+    const mesh = new THREE.Mesh(hoopGeo, hoopMaterial);
+    mesh.position.set(x, y, z);
+    scene.add(mesh);
 
     return {
         type: COLLECTIBLE_TYPES.HOOP,
-        mesh: group,
-        glow,
+        mesh,
         zPos: z,
         baseY: y,
         collected: false,
@@ -284,7 +273,7 @@ export function updateCollectibles(time, marblePos, marbleRadius, canCollect = t
         } else if (c.type === COLLECTIBLE_TYPES.DOT) {
             c.mesh.position.y = c.baseY + 0.5 + Math.sin(time * 3 + c.zPos) * 0.1;
         } else if (c.type === COLLECTIBLE_TYPES.HOOP) {
-            if (c.glow) c.glow.intensity = 1.5 + Math.sin(time * 3 + c.zPos) * 0.5;
+            c.mesh.material.emissiveIntensity = 1.0 + Math.sin(time * 3 + c.zPos) * 0.3;
         } else if (c.type === COLLECTIBLE_TYPES.BOOST) {
             c.mesh.rotation.y = time * 3;
             c.mesh.position.y = c.baseY + 0.6 + Math.sin(time * 2.5 + c.zPos) * 0.15;
@@ -345,4 +334,8 @@ export function resetCollectibles(scene) {
         scene.remove(c.mesh);
     }
     collectibles.length = 0;
+}
+
+export function getCollectibleMaterials() {
+    return [dotMaterial, diamondMaterial, hoopMaterial, boostMaterial];
 }

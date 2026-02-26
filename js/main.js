@@ -1,13 +1,13 @@
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
-import { initScene, getScene, getCamera, getRenderer } from './scene.js';
+import { initScene, getScene, getCamera, getRenderer, warmUpGPU } from './scene.js';
 import { initPhysics, stepPhysics, getWorld, GROUPS } from './physics.js';
 import { createMarble, updateMarble, getMarbleMesh, getMarbleBody, getMarbleRadius, enterGhostMode, endGhostMode, isGhostMode, getGhostTimer, getGhostDuration, respawnMarble } from './player.js';
 import { initControls, updateControls } from './controls.js';
 import { initTrack, generateSegment, removeOldSegments, getSegments, getSegmentLength, getLastSegmentZ, resetTrack, getCurrentTrackY } from './track.js';
 import { initRails, updateRails } from './rails.js';
-import { spawnObstacle, updateObstacles, removeOldObstacles, resetObstacles } from './obstacles.js';
-import { spawnCollectiblesForSegment, updateCollectibles, removeOldCollectibles, resetCollectibles } from './collectibles.js';
+import { spawnObstacle, updateObstacles, removeOldObstacles, resetObstacles, getObstacleMaterials } from './obstacles.js';
+import { spawnCollectiblesForSegment, updateCollectibles, removeOldCollectibles, resetCollectibles, getCollectibleMaterials } from './collectibles.js';
 import { initHUD, updateScore, updateHighScore, updateLives, showGhostIndicator, hideGhostIndicator, showLevelUp, showHUD, hideHUD, showTitleScreen, hideTitleScreen, showGameOver, hideGameOver, screenShake, hitFlash, getRestartButton, getTitleScreen } from './hud.js';
 import { getDifficultyForScore, checkLevelUp, getSpeedMultiplier, getCurrentLevel, resetDifficulty } from './difficulty.js';
 import { createSkybox, updateSkybox } from './skybox.js';
@@ -88,6 +88,9 @@ function init() {
     initHUD();
 
     initAudio();
+
+    // Pre-compile all shader programs so the first gameplay frame doesn't stall
+    warmUpGPU([...getObstacleMaterials(), ...getCollectibleMaterials()]);
 
     showTitleScreen(highScore);
 
