@@ -5,7 +5,7 @@ const collectibles = [];
 // Shared geometries
 const dotGeo = new THREE.SphereGeometry(0.2, 12, 12);
 const diamondGeo = new THREE.OctahedronGeometry(0.35, 1);
-const hoopGeo = new THREE.TorusGeometry(1.5, 0.12, 12, 32);
+const hoopGeo = new THREE.TorusGeometry(2.0, 0.15, 12, 24, Math.PI);
 const boostGeo = (() => {
     const geo = new THREE.ConeGeometry(0.3, 0.7, 8);
     geo.rotateX(-Math.PI / 2); // Point forward (-Z)
@@ -30,13 +30,11 @@ const diamondMaterial = new THREE.MeshStandardMaterial({
 });
 
 const hoopMaterial = new THREE.MeshStandardMaterial({
-    color: 0xff44ff,
-    emissive: 0xff00ff,
-    emissiveIntensity: 0.8,
+    color: 0xffee00,
+    emissive: 0xffcc00,
+    emissiveIntensity: 1.0,
     roughness: 0.2,
-    metalness: 0.5,
-    transparent: true,
-    opacity: 0.8
+    metalness: 0.5
 });
 
 const boostMaterial = new THREE.MeshStandardMaterial({
@@ -87,19 +85,30 @@ function createDiamond(scene, x, y, z) {
 }
 
 function createHoop(scene, x, y, z) {
-    const mesh = new THREE.Mesh(hoopGeo, hoopMaterial);
-    mesh.position.set(x, y + 2.0, z);
-    scene.add(mesh);
+    const group = new THREE.Group();
+
+    // Half-torus arch — feet on the ground, curves over the top
+    const arch = new THREE.Mesh(hoopGeo, hoopMaterial);
+    group.add(arch);
+
+    // Neon glow light at the top of the arch
+    const glow = new THREE.PointLight(0xffee00, 1.5, 6);
+    glow.position.set(0, 2.0, 0);
+    group.add(glow);
+
+    group.position.set(x, y, z);
+    scene.add(group);
 
     return {
         type: COLLECTIBLE_TYPES.HOOP,
-        mesh,
+        mesh: group,
+        glow,
         zPos: z,
         baseY: y,
         collected: false,
         collectTime: 0,
         points: 100,
-        innerRadius: 1.5
+        innerRadius: 2.0
     };
 }
 
@@ -275,7 +284,7 @@ export function updateCollectibles(time, marblePos, marbleRadius, canCollect = t
         } else if (c.type === COLLECTIBLE_TYPES.DOT) {
             c.mesh.position.y = c.baseY + 0.5 + Math.sin(time * 3 + c.zPos) * 0.1;
         } else if (c.type === COLLECTIBLE_TYPES.HOOP) {
-            c.mesh.rotation.y = Math.sin(time * 0.8 + c.zPos) * 0.15;
+            if (c.glow) c.glow.intensity = 1.5 + Math.sin(time * 3 + c.zPos) * 0.5;
         } else if (c.type === COLLECTIBLE_TYPES.BOOST) {
             c.mesh.rotation.y = time * 3;
             c.mesh.position.y = c.baseY + 0.6 + Math.sin(time * 2.5 + c.zPos) * 0.15;
@@ -298,13 +307,12 @@ export function updateCollectibles(time, marblePos, marbleRadius, canCollect = t
             pointsEarned += c.points;
             boostCollected = true;
         } else if (c.type === COLLECTIBLE_TYPES.HOOP) {
-            const hoopPos = c.mesh.position;
-            const dz = Math.abs(marblePos.z - hoopPos.z);
-            const dx = marblePos.x - hoopPos.x;
-            const dy = marblePos.y - hoopPos.y;
-            const radialDist = Math.sqrt(dx * dx + dy * dy);
+            const archPos = c.mesh.position;
+            const dz = Math.abs(marblePos.z - archPos.z);
+            const dx = Math.abs(marblePos.x - archPos.x);
 
-            if (dz < marbleRadius + 0.3 && radialDist < c.innerRadius) {
+            // Ball passes through the arch opening: close in Z, within the arch width
+            if (dz < marbleRadius + 0.5 && dx < c.innerRadius) {
                 collectItem(c);
                 pointsEarned += c.points;
             }
