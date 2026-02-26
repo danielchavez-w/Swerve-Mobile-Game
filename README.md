@@ -7,11 +7,10 @@
 
 | Action | Input |
 | :--- | :--- |
-| **Steer the Marble** | Touch & hold the marble, drag left/right |
-| **Speed Boost** | Drag forward while holding |
-| **Release** | Lift finger — marble continues with momentum |
+| **Steer the Marble** | Touch & hold, drag left/right |
+| **Jump** | Swipe up while holding |
 
-> The marble always rolls forward automatically. Your finger guides it.
+> The marble always rolls forward automatically. Your finger guides it left and right.
 
 ### 🎮 Game
 
@@ -24,9 +23,10 @@
 
 The track is loaded with pickups. Grab everything you can.
 
-1. **Point Dots (10 pts):** Small glowing spheres scattered along the track in lines and patterns. The bread and butter of your score.
-2. **Diamonds (50 pts):** Rotating gems placed at tricky spots — edges of the track, tops of ramps. Risk meets reward.
-3. **Aerial Hoops (100 pts):** Glowing rings floating above ramps. Launch off a ramp and thread through the hoop for big points.
+1. **Point Dots (10 pts):** Small neon blue spheres scattered along the track in lines and wave patterns. The bread and butter of your score.
+2. **Speed Boost (25 pts):** Green glowing cones that give a short burst of speed when collected. Appear starting at level 3.
+3. **Diamonds (50 pts):** Rotating golden gems placed at tricky spots. Risk meets reward.
+4. **Aerial Hoops (100 pts):** Glowing pink rings floating above the track. Thread through the hoop for big points.
 
 ### 🚧 Obstacles & Ghost Mode
 
@@ -35,30 +35,33 @@ Barriers appear along the track to test your reflexes:
 * **Static Walls** — fixed blocks covering part of the track. Swerve around them.
 * **Swinging Arms** — pendulum beams sweeping side to side.
 * **Sliding Blocks** — barriers that slide back and forth across the track.
+* **Low Bars** — horizontal bars with a narrow gap to thread through.
 
 **When you get hit:**
 
 * You lose 1 life.
 * The marble enters **Ghost Mode** for 3 seconds — it turns transparent and can phase through all barriers.
-* You can still move, steer, and collect points during Ghost Mode.
+* The marble slows down to 40% speed and gradually ramps back up. The slowdown lasts longer at higher levels.
+* You can still move and steer during Ghost Mode, but you **cannot collect points**.
 * After 3 seconds, the marble solidifies and you're vulnerable again.
 
 ### 📈 Difficulty Scaling
 
 The game gets harder the better you play. As your score climbs, expect:
 
-* **Faster base speed** — the marble accelerates over time.
+* **Faster base speed** — the marble accelerates with each level.
 * **More barriers** — obstacles appear more frequently.
-* **Trickier track** — narrower paths, sharper curves, more ramps.
-* **Fewer collectibles** — points become harder to come by.
+* **Longer hit slowdowns** — recovery from hits takes longer at higher levels.
 
-| Score | Level | What Changes |
-| :--- | :--- | :--- |
-| 0 – 500 | Easy | Wide tracks, slow speed, lots of pickups |
-| 500 – 1,500 | Medium | Ramps and curves introduced, speed increases |
-| 1,500 – 3,000 | Hard | Narrow paths, frequent barriers |
-| 3,000 – 5,000 | Very Hard | Complex track layouts, high speed |
-| 5,000+ | Extreme | Maximum speed and obstacle density. Good luck. |
+| Score | Level | Speed | What Changes |
+| :--- | :--- | :--- | :--- |
+| 0 – 499 | Easy | 1.0x | Slow speed, few obstacles, lots of pickups |
+| 500 – 1,499 | Medium | 1.15x | Speed increases, more obstacles |
+| 1,500 – 2,499 | Hard | 1.3x | Frequent barriers, speed boosts start appearing |
+| 2,500 – 3,999 | Very Hard | 1.55x | High speed, dense obstacles |
+| 4,000 – 5,999 | Extreme | 1.8x | Very fast, obstacles everywhere |
+| 6,000 – 7,999 | Insane | 2.1x | Relentless speed and obstacle density |
+| 8,000+ | Nightmare | 2.4x | Maximum speed. Good luck. |
 
 ### 🌌 Setting
 
@@ -76,9 +79,13 @@ The entire game takes place under a **night sky with northern lights**. Stars tw
 
 ### 🛠 Developer Iteration Notes
 
-> *"Touch controls are everything in a mobile game like this. The force-based steering had to feel weighty but responsive — not floaty, not snappy. A lot of tuning went into the drag-to-force multiplier and the ball's damping values to hit that sweet spot."*
+> *"The original touch controls were force-based — you'd push the ball and it would drift. It felt floaty and imprecise, especially at higher speeds. Switching to 1:1 world-space tracking changed everything. Your finger is the ball. Wherever you drag, the marble follows instantly. That directness is what makes dodging at 2.4x speed feel possible instead of hopeless."*
 
-> *"Ghost Mode was initially confusing for players — they didn't realize they were invulnerable. Adding the transparency effect, a pulsing glow, and a visible 3-second countdown near the lives display made the mechanic instantly readable."*
+> *"Ghost Mode originally let you keep collecting points while invulnerable. It felt broken — you'd get hit on purpose near a cluster of pickups and profit from it. Disabling collection during ghost mode turned it into a pure survival mechanic. Now getting hit always costs you something, even if you don't die."*
+
+> *"The speed boost collectible went through a few rounds of tuning. The first version was way too strong — it launched you forward and you'd slam into the next obstacle before you could react. We dialed it down to a 1.3x burst for half a second, just enough to feel the kick without losing control. Delaying it to level 3 also helped — by the time it shows up, the player already knows how the track feels at speed."*
+
+> *"Hit slowdown was the last big balancing pass. Before it existed, getting hit at level 6 or 7 was basically a death sentence — you'd respawn at full speed into another obstacle. Dropping the ball to 40% speed on hit and ramping it back up gives you a window to recover and reposition. The ramp-up duration scales with level — 2 seconds early on, up to 4.5 at Nightmare — so the safety net grows with the difficulty."*
 
 ---
 

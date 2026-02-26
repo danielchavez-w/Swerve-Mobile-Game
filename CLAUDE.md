@@ -12,8 +12,8 @@ A 3D ball-rolling endless runner built with Three.js & Cannon-es. (MOBILE WEB: i
 
 ## Project Status
 
-**DONE:** Core gameplay mechanics, physics installed, and HUD/UI.
+**DONE:** Core gameplay mechanics, physics installed, HUD/UI, and high score persistence. 
 
-**CURRENT FOCUS:** Adding ramps, temporary boost, physics adjustment, and managing collectibles and obstacles. 
+**CURRENT FOCUS:** Adding ramps, temporary boost, background effects, and obstacle appearance. 
 
-**NEXT UP:** Implementing additional graphic and background settings.
+**NEXT UP:** Polish and refine gameplay mechanics.
