@@ -8,7 +8,6 @@
 | Action | Input |
 | :--- | :--- |
 | **Steer the Marble** | Touch & hold, drag left/right |
-| **Jump** | Swipe up while holding |
 
 > The marble always rolls forward automatically. Your finger guides it left and right.
 
