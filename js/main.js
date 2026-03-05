@@ -11,6 +11,7 @@ import { spawnCollectiblesForSegment, updateCollectibles, removeOldCollectibles,
 import { initHUD, updateScore, updateHighScore, updateLives, showGhostIndicator, hideGhostIndicator, showLevelUp, showHUD, hideHUD, showTitleScreen, hideTitleScreen, showGameOver, hideGameOver, screenShake, hitFlash, getRestartButton, getTitleScreen } from './hud.js';
 import { getDifficultyForScore, checkLevelUp, getSpeedMultiplier, getCurrentLevel, resetDifficulty } from './difficulty.js';
 import { createSkybox, updateSkybox } from './skybox.js';
+import { createHexBackground, updateHexBackground, getHexMaterial } from './hexbg.js';
 import { initAudio, resumeAudio, playCollectSound, playDiamondSound, playHoopSound, playHitSound, playGameOverSound, playLevelUpSound, playBoostSound } from './audio.js';
 
 // Game states
@@ -77,6 +78,7 @@ function init() {
     trackPhysMaterial = trackMaterial;
 
     createSkybox(scene);
+    createHexBackground(scene);
 
     const { mesh: marbleMesh, body: marbleBody } = createMarble(scene, world, marbleMaterial);
 
@@ -90,7 +92,7 @@ function init() {
     initAudio();
 
     // Pre-compile all shader programs so the first gameplay frame doesn't stall
-    warmUpGPU([...getObstacleMaterials(), ...getCollectibleMaterials()]);
+    warmUpGPU([...getObstacleMaterials(), ...getCollectibleMaterials(), getHexMaterial()]);
 
     showTitleScreen(highScore);
 
@@ -263,6 +265,7 @@ function gameLoop(timestamp) {
     const camera = getCamera();
 
     updateSkybox(timestamp / 1000, camera.position);
+    updateHexBackground(timestamp / 1000, camera.position);
     renderer.render(scene, camera);
 }
 
