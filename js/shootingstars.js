@@ -6,30 +6,52 @@
 // effect costs nothing during normal play.
 import * as THREE from 'three';
 
-const STAR_COUNT = 5;
-const LIFETIME = 2.6;          // seconds — last streak clears just before the banner does
+const STAR_COUNT = 8;
+// Seconds. Must outlast the slowest streak's delay + duration or it gets cut off
+// mid-flight; the banner itself finishes fading at 3.0s.
+const LIFETIME = 3.0;
 const DEPTH = -100;            // units ahead of the camera
 
-// Streaks are confined to a band of open sky. Both the track and the hex floor
+// Streaks are confined to bands of open sky. Both the track and the hex floor
 // sit below the camera, so everything they occupy on screen is below the horizon
 // line (camera-relative y = 0) at any distance. Keeping the whole streak — head
-// AND tail — above SKY_LOW guarantees it never crosses the ground. Values are at
-// the reference depth of 100 and scale with each streak's actual depth, so the
-// band covers the same slice of sky no matter how far out it flies.
-const SKY_LOW = 14;            // ≈8° above the horizon — clear of the ground
+// AND tail — above the band floor guarantees it never crosses the ground. Values
+// are at the reference depth of 100 and scale with each streak's actual depth, so
+// a band covers the same slice of sky no matter how far out it flies.
+const SKY_LOW = 14;            // upper band floor, ≈8° above the horizon
 const SKY_HIGH = 34;           // just inside the top of the frame in portrait
 
-// One vivid colour each, shuffled per celebration so no two look alike
-const COLORS = [0xff2d95, 0x00e5ff, 0xffd23f, 0xb14dff, 0x39ff9e];
+// Lower band — streaks that rise out of the corners just above the floor line.
+// Still entirely sky: the ground never reaches above the horizon.
+const LOW_BAND_LOW = 8;
+const LOW_BAND_HIGH = 19;
+
+// Per-level palettes. Each level celebrates in its own colours, warming through
+// the mid game and going high-contrast at Nightmare.
+const LEVEL_PALETTES = {
+    2: [0x00ffd5, 0x39ff9e, 0x00e5ff, 0x7dffb0, 0x00ffaa, 0x5cf9ff],
+    3: [0xffd23f, 0xff9500, 0xffe680, 0xff6b1a, 0xffc14d, 0xff8a3d],
+    4: [0xb14dff, 0xff2d95, 0xd98cff, 0xff6ad5, 0x8a2be2, 0xff9ae8],
+    5: [0xff3b5c, 0xff7a45, 0xff5c8a, 0xffa07a, 0xff2e63, 0xffb37a],
+    6: [0x2b7fff, 0x00e5ff, 0x6aa9ff, 0x00b3ff, 0x4d6bff, 0x7fe9ff],
+    7: [0xffffff, 0xff2d95, 0x00e5ff, 0xffe680, 0xb14dff, 0xff5cf0]
+};
+const DEFAULT_PALETTE = [0xff2d95, 0x00e5ff, 0xffd23f, 0xb14dff, 0x39ff9e, 0xff8a3d];
 
 // Flight paths as start → end, x in sky units and b as a 0–1 height within the
-// band. Every endpoint stays inside the band, so the whole sweep stays in sky.
+// band. `low` picks the near-floor band; `dur` sets the base flight time, so
+// streaks travel at visibly different speeds.
 const PATHS = [
-    { sx: -52, sb: 0.86, ex: 52, eb: 0.55 },   // left → right
-    { sx: 52, sb: 0.74, ex: -52, eb: 0.44 },   // right → left
-    { sx: -46, sb: 0.08, ex: 34, eb: 0.95 },   // bottom-left → top-right
-    { sx: 46, sb: 0.96, ex: -38, eb: 0.14 },   // top-right → bottom-left
-    { sx: -30, sb: 1.00, ex: 30, eb: 0.18 }    // top-left → bottom-right
+    // Upper sky sweeps
+    { sx: -52, sb: 0.86, ex: 52, eb: 0.55, low: false, dur: 1.15 },   // left → right
+    { sx: 52, sb: 0.74, ex: -52, eb: 0.44, low: false, dur: 1.35 },   // right → left
+    { sx: -46, sb: 0.10, ex: 34, eb: 0.95, low: false, dur: 1.00 },   // bottom-left → top-right
+    { sx: 46, sb: 0.96, ex: -38, eb: 0.16, low: false, dur: 0.92 },   // top-right → bottom-left
+    { sx: -30, sb: 1.00, ex: 30, eb: 0.20, low: false, dur: 1.50 },   // top-left → bottom-right
+    // Low streaks climbing out of the corners just above the floor line
+    { sx: -50, sb: 0.16, ex: 10, eb: 0.98, low: true, dur: 0.82 },   // out of the bottom-left corner
+    { sx: 50, sb: 0.20, ex: -4, eb: 1.00, low: true, dur: 0.95 },   // out of the bottom-right corner
+    { sx: -44, sb: 0.62, ex: 46, eb: 0.24, low: true, dur: 1.60 }    // long low skim across
 ];
 
 const vertexShader = `
@@ -79,7 +101,7 @@ const fragmentShader = `
 
 let group = null;
 const stars = [];
-const colorOrder = [0, 1, 2, 3, 4];
+const colorOrder = [0, 1, 2, 3, 4, 5];
 let active = false;
 let startTime = 0;
 
@@ -98,7 +120,7 @@ export function createShootingStars(scene) {
     for (let i = 0; i < STAR_COUNT; i++) {
         const material = new THREE.ShaderMaterial({
             uniforms: {
-                uColor: { value: new THREE.Color(COLORS[i]) },
+                uColor: { value: new THREE.Color(DEFAULT_PALETTE[i % DEFAULT_PALETTE.length]) },
                 uFade: { value: 0 },
                 uTime: { value: 0 }
             },
@@ -138,8 +160,10 @@ function rollStar(star, index) {
     star.depth = DEPTH - Math.random() * 20;
     const scale = Math.abs(star.depth) / 100;
 
-    const bandLow = SKY_LOW * scale;
-    const bandSpan = (SKY_HIGH - SKY_LOW) * scale;
+    const low = path.low ? LOW_BAND_LOW : SKY_LOW;
+    const high = path.low ? LOW_BAND_HIGH : SKY_HIGH;
+    const bandLow = low * scale;
+    const bandSpan = (high - low) * scale;
 
     // Jitter the endpoints so repeat level-ups don't retrace the same lines
     const sx = (path.sx + (Math.random() - 0.5) * 8) * scale;
@@ -158,8 +182,9 @@ function rollStar(star, index) {
     star.dist = len;
     star.angle = Math.atan2(star.dy, star.dx);
 
-    star.delay = index * 0.13 + Math.random() * 0.35;
-    star.duration = 1.05 + Math.random() * 0.4;
+    star.delay = index * 0.085 + Math.random() * 0.35;
+    // Each path has its own base speed, jittered so repeats don't match
+    star.duration = path.dur * (0.85 + Math.random() * 0.3);
     star.length = (22 + Math.random() * 14) * scale;
     star.thickness = (0.85 + Math.random() * 0.7) * scale;
 
@@ -167,10 +192,12 @@ function rollStar(star, index) {
     star.mesh.visible = false;
 }
 
-export function triggerShootingStars(time) {
+export function triggerShootingStars(time, level = 2) {
     if (!group) return;
 
-    // Shuffle which streak gets which colour
+    const palette = LEVEL_PALETTES[level] || DEFAULT_PALETTE;
+
+    // Shuffle which streak gets which colour from this level's palette
     for (let i = colorOrder.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         const tmp = colorOrder[i];
@@ -180,7 +207,8 @@ export function triggerShootingStars(time) {
 
     for (let i = 0; i < STAR_COUNT; i++) {
         const star = stars[i];
-        star.material.uniforms.uColor.value.setHex(COLORS[colorOrder[i]]);
+        const color = palette[colorOrder[i % colorOrder.length] % palette.length];
+        star.material.uniforms.uColor.value.setHex(color);
         star.material.uniforms.uFade.value = 0;
         rollStar(star, i);
     }

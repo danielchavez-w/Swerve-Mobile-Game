@@ -10,7 +10,7 @@ import { spawnObstacle, updateObstacles, removeOldObstacles, resetObstacles, get
 import { spawnCollectiblesForSegment, updateCollectibles, removeOldCollectibles, resetCollectibles, getCollectibleMaterials } from './collectibles.js';
 import { initHUD, updateScore, updateHighScore, updateLives, showGhostIndicator, hideGhostIndicator, showLevelUp, showHUD, hideHUD, showTitleScreen, hideTitleScreen, showGameOver, hideGameOver, screenShake, hitFlash, getRestartButton, getTitleScreen } from './hud.js';
 import { getDifficultyForScore, checkLevelUp, getSpeedMultiplier, getCurrentLevel, resetDifficulty } from './difficulty.js';
-import { createSkybox, updateSkybox } from './skybox.js';
+import { createSkybox, updateSkybox, setSkyLevel } from './skybox.js';
 import { createHexBackground, updateHexBackground, getHexMaterial } from './hexbg.js';
 import { createShootingStars, updateShootingStars, triggerShootingStars, resetShootingStars, getShootingStarMaterials } from './shootingstars.js';
 import { initAudio, resumeAudio, playCollectSound, playDiamondSound, playHoopSound, playHitSound, playGameOverSound, playLevelUpSound, playBoostSound } from './audio.js';
@@ -90,7 +90,7 @@ function init() {
     const { world, trackMaterial, marbleMaterial } = initPhysics();
     trackPhysMaterial = trackMaterial;
 
-    createSkybox(scene);
+    createSkybox(scene, renderer);
     createHexBackground(scene);
     createShootingStars(scene);
 
@@ -117,6 +117,9 @@ function init() {
         ...getShootingStarMaterials(),
         getHexMaterial()
     ]);
+    // Sky materials (stars/nebulae) are already in the scene and visible,
+    // so renderer.compile() inside warmUpGPU covers them. The star shader is a
+    // Points material with custom attributes and must not go on a temp Mesh.
 
     showTitleScreen(highScore);
 
@@ -149,6 +152,7 @@ function startGame() {
     resetObstacles(scene, world);
     resetCollectibles(scene);
     resetShootingStars();
+    setSkyLevel(1, true);
     resetDifficulty();
 
     score = 0;
@@ -223,7 +227,6 @@ function startGame() {
     hideGameOver();
     showHUD();
     showLevelUp(1);
-    triggerShootingStars(performance.now() / 1000);
     lastTime = performance.now();
     gameState = STATES.PLAYING;
 
@@ -430,7 +433,9 @@ function updatePlaying(dt, time) {
         const levelUp = checkLevelUp(score);
         if (levelUp) {
             showLevelUp(levelUp.level);
-            triggerShootingStars(time);
+            // Celebration is for levels actually earned — level 1 is just the start
+            triggerShootingStars(time, levelUp.level);
+            setSkyLevel(levelUp.level);
             playLevelUpSound();
         }
 

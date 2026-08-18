@@ -66,7 +66,7 @@ The game gets harder the better you play. As your score climbs, expect:
 
 The entire game takes place under a **night sky with northern lights**. Stars twinkle overhead and aurora ribbons of green, cyan, and purple flow across the horizon. The track itself is a neon-lit corridor — glowing edge rails on a dark surface, cutting through the void.
 
-Every time you reach a new level, a burst of **colorful shooting stars** sweeps across the sky behind the level banner.
+Every time you reach a new level, a burst of **colorful shooting stars** sweeps across the sky behind the level banner — each level in its own palette. The **nebula ribbons shift colour** as you climb the levels, and the star field runs three tiers deep, from bright pulsating stars down to a dim scatter.
 
 ### 📊 HUD & Scoring
 
@@ -101,6 +101,14 @@ Every time you reach a new level, a burst of **colorful shooting stars** sweeps 
 > *"Ramps had been sitting in track.js since the first prototype — a full builder, a type picker, angled physics bodies, arrow decals — and generateSegment never called any of it. Not once. It was dead weight that every future change to the track had to read past and route around. Deleting it took the file from 251 lines to 132."*
 
 > *"Reaching a new level deserved a moment. Five shooting stars now streak across the sky as the banner appears — pink, cyan, gold, violet, mint — shuffled every time so no two celebrations look alike, each on its own heading: across, back, up from the corner, down from the top. The first pass had four of the five flying down through the track and the hex floor, which read as falling debris instead of sky. They're pinned to a band of open sky now that scales with distance, so the lowest any streak reaches is about seven degrees above the horizon — everything the player actually drives on sits below that line."*
+
+> *"The celebration moved to level 2 and up — level 1 is where you start, not something you reach. Eight streaks now instead of five: the original five sweeping the upper sky, plus three that climb out of the corners just above the floor line, each with its own speed so some knife across while others drift. Every level celebrates in its own colours — aqua at 2, ember at 3, orchid at 4, crimson at 5, deep blue at 6, and white-hot pink and cyan at Nightmare."*
+
+> *"Three separate bugs were hiding in the night sky, and each one masked the next. The twinkle never worked at all: the code wrote a per-star size attribute every third frame, but PointsMaterial only reads its own uniform and ignores per-vertex size entirely — pure cost, no effect. With that fixed, only one bright star showed up, because the stars sat 181 to 260 units out against a far plane of 200, so three quarters of the field was being clipped and never drawn. And once they were all inside the frustum, the middle of the sky still looked empty — scattering uniformly over a sphere buries about 73% of the stars near the zenith, above the top of the frame. The camera pitches down roughly 13 degrees with a 65 degree field of view, so the only sky you ever see runs from the horizon to about 20 degrees up. Placing stars by elevation angle into that band took the count in frame from 16 to 78."*
+
+> *"The gradient dome had been dead the entire time. Radius 250 against a far plane of 200 puts every vertex past the clip distance, so it hadn't drawn a single pixel since the far plane was tightened. Pulling it back into range revealed why nobody had missed it — a coloured wash along the bottom of the sky that fought the nebulae for attention. It's gone now, geometry and shader both. The backdrop is a flat night and the ribbons carry the sky, which is what the game had effectively been shipping all along."*
+
+> *"Stars are sorted into three tiers now to lean into realism: a handful of bright ones that swell and throb behind a halo with a colour cast, a middle layer that twinkles gently, and a dense dim scatter that only shimmers and recedes. All of it runs off a single time uniform in the vertex shader, so the CPU does nothing per frame. The nebulae shift palette on every level-up, blending over about three seconds from wherever they happen to be, so gaining a level mid-transition never snaps."*
 
 ---
 
