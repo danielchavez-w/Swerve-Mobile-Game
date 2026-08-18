@@ -66,6 +66,8 @@ The game gets harder the better you play. As your score climbs, expect:
 
 The entire game takes place under a **night sky with northern lights**. Stars twinkle overhead and aurora ribbons of green, cyan, and purple flow across the horizon. The track itself is a neon-lit corridor — glowing edge rails on a dark surface, cutting through the void.
 
+Every time you reach a new level, a burst of **colorful shooting stars** sweeps across the sky behind the level banner.
+
 ### 📊 HUD & Scoring
 
 | Position | Display |
@@ -90,7 +92,15 @@ The entire game takes place under a **night sky with northern lights**. Stars tw
 
 > *"The hoops used to be flat pink rings floating in the air. They looked like decorations, not rewards. Replacing them with neon yellow arches planted on the track made the 100-point pickup feel like a real gateway — something you aim for and drive through, not something you accidentally clip."*
 
-> *"Mobile performance was stuttering near arches and at game start. Two culprits: every arch was spawning a dynamic PointLight, and the GPU was compiling shaders on the first frame they appeared. Killing the PointLights in favor of emissive materials and adding a shader warm-up pass during init — one off-screen render of every material — eliminated both hitches completely."*
+> *"Mobile performance was stuttering near arches and at game start. Two culprits: every arch was spawning a dynamic PointLight, and the GPU was compiling shaders on the first frame they appeared. Killing the PointLights in favor of emissive materials fixed the arch stutter outright. We also added a shader warm-up pass during init — one off-screen render of every material — which turned out to be a story for a later entry."*
+
+> *"The stutter when you got hit took four separate fixes, and the biggest one was hiding inside the warm-up pass we'd been trusting for months. It parked its meshes off-screen at y = -100, which is exactly where Three.js frustum-culls them — and a culled mesh never reaches the GPU, so not one shader was ever actually compiling. The ghost marble is a transparent material, and transparent is a different shader program from solid, so the driver was compiling it at the precise moment you took damage. Disabling frustum culling on those meshes was a one-line change that finally did the job the pass was written to do."*
+
+> *"The other three stacked onto that same frame. Retiring a track segment was disposing the shared material every other segment still used, which threw away its compiled program and forced a recompile on the next one — and segments retire constantly. The red damage flash was building a full-screen div from scratch on every hit, forcing a layout and a fresh compositor layer at the worst possible instant; it lives in the DOM permanently now and just toggles a class. And the forward velocity was snapping to 40% in a single frame. It eases down over 0.18 seconds now and recovers on a smoothstep — same 40% floor, same per-level durations, no jolt. Ghost mode fades in and back out instead of popping, so the material swap happens while the marble is already solid and you never catch it."*
+
+> *"Ramps had been sitting in track.js since the first prototype — a full builder, a type picker, angled physics bodies, arrow decals — and generateSegment never called any of it. Not once. It was dead weight that every future change to the track had to read past and route around. Deleting it took the file from 251 lines to 132."*
+
+> *"Reaching a new level deserved a moment. Five shooting stars now streak across the sky as the banner appears — pink, cyan, gold, violet, mint — shuffled every time so no two celebrations look alike, each on its own heading: across, back, up from the corner, down from the top. The first pass had four of the five flying down through the track and the hex floor, which read as falling debris instead of sky. They're pinned to a band of open sky now that scales with distance, so the lowest any streak reaches is about seven degrees above the horizon — everything the player actually drives on sits below that line."*
 
 ---
 
