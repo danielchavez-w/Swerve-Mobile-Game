@@ -3,6 +3,10 @@
 >
 > **(STILL IN PROGRESS)** ⚠️ This build is under active development. Expect unresolved bugs, visual glitches, and unfinished features. Things will break.
 
+[**➡️ PLAY THE GAME HERE**](https://danielchavez-w.github.io/Swerve-Mobile-Game/)
+
+---
+
 ### 📱 Controls
 
 | Action | Input |
