@@ -2,16 +2,17 @@ import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { initScene, getScene, getCamera, getRenderer, warmUpGPU } from './scene.js';
 import { initPhysics, stepPhysics, getWorld, GROUPS } from './physics.js';
-import { createMarble, updateMarble, getMarbleMesh, getMarbleBody, getMarbleRadius, enterGhostMode, endGhostMode, isGhostMode, getGhostTimer, getGhostDuration, respawnMarble } from './player.js';
+import { createMarble, updateMarble, getMarbleMesh, getMarbleBody, getMarbleRadius, enterGhostMode, endGhostMode, isGhostMode, getGhostTimer, getGhostDuration, respawnMarble, getPlayerMaterials } from './player.js';
 import { initControls, updateControls } from './controls.js';
-import { initTrack, generateSegment, removeOldSegments, getSegments, getSegmentLength, getLastSegmentZ, resetTrack, getCurrentTrackY } from './track.js';
-import { initRails, updateRails } from './rails.js';
+import { initTrack, generateSegment, removeOldSegments, getSegments, getSegmentLength, getLastSegmentZ, resetTrack, getCurrentTrackY, getTrackMaterials } from './track.js';
+import { initRails, updateRails, getRailMaterials } from './rails.js';
 import { spawnObstacle, updateObstacles, removeOldObstacles, resetObstacles, getObstacleMaterials } from './obstacles.js';
 import { spawnCollectiblesForSegment, updateCollectibles, removeOldCollectibles, resetCollectibles, getCollectibleMaterials } from './collectibles.js';
 import { initHUD, updateScore, updateHighScore, updateLives, showGhostIndicator, hideGhostIndicator, showLevelUp, showHUD, hideHUD, showTitleScreen, hideTitleScreen, showGameOver, hideGameOver, screenShake, hitFlash, getRestartButton, getTitleScreen } from './hud.js';
 import { getDifficultyForScore, checkLevelUp, getSpeedMultiplier, getCurrentLevel, resetDifficulty } from './difficulty.js';
 import { createSkybox, updateSkybox } from './skybox.js';
 import { createHexBackground, updateHexBackground, getHexMaterial } from './hexbg.js';
+import { createShootingStars, updateShootingStars, triggerShootingStars, resetShootingStars, getShootingStarMaterials } from './shootingstars.js';
 import { initAudio, resumeAudio, playCollectSound, playDiamondSound, playHoopSound, playHitSound, playGameOverSound, playLevelUpSound, playBoostSound } from './audio.js';
 
 // Game states
@@ -50,7 +51,19 @@ const HIT_SLOW_DURATIONS = {
     6: 4.0,
     7: 4.5
 };
-const HIT_SLOW_MIN = 0.4; // Drops to 40% speed on hit
+const HIT_SLOW_MIN = 0.4;   // Drops to 40% speed on hit
+// The drop is eased in over a few frames rather than applied on one — snapping
+// the forward velocity on impact read as a frame hitch even when nothing dropped.
+// Same 40% floor and same recovery duration as before, just no step or kink.
+const HIT_SLOW_IN = 0.18;
+let speedPenalty = 1;
+let hitSlowFrom = 1;   // speed the ease-in starts from, so a second hit doesn't jump
+
+function smoothstep01(p) {
+    if (p <= 0) return 0;
+    if (p >= 1) return 1;
+    return p * p * (3 - 2 * p);
+}
 
 // Camera follow parameters
 const cameraOffset = new THREE.Vector3(0, 5, 8);
@@ -79,6 +92,7 @@ function init() {
 
     createSkybox(scene);
     createHexBackground(scene);
+    createShootingStars(scene);
 
     const { mesh: marbleMesh, body: marbleBody } = createMarble(scene, world, marbleMaterial);
 
@@ -91,8 +105,18 @@ function init() {
 
     initAudio();
 
-    // Pre-compile all shader programs so the first gameplay frame doesn't stall
-    warmUpGPU([...getObstacleMaterials(), ...getCollectibleMaterials(), getHexMaterial()]);
+    // Pre-compile every shader program up front. Anything that first appears
+    // mid-game — the ghost marble, the level-up streaks — has to be in here, or
+    // the driver compiles it on the frame it shows up and the game hitches.
+    warmUpGPU([
+        ...getObstacleMaterials(),
+        ...getCollectibleMaterials(),
+        ...getPlayerMaterials(),
+        ...getTrackMaterials(),
+        ...getRailMaterials(),
+        ...getShootingStarMaterials(),
+        getHexMaterial()
+    ]);
 
     showTitleScreen(highScore);
 
@@ -124,6 +148,7 @@ function startGame() {
     resetTrack(scene, world);
     resetObstacles(scene, world);
     resetCollectibles(scene);
+    resetShootingStars();
     resetDifficulty();
 
     score = 0;
@@ -134,6 +159,8 @@ function startGame() {
     boostTimer = 0;
     hitSlowActive = false;
     hitSlowTimer = 0;
+    speedPenalty = 1;
+    hitSlowFrom = 1;
 
     // Generate initial track first, so we know the Y
     for (let i = 0; i < SEGMENTS_AHEAD; i++) {
@@ -196,6 +223,7 @@ function startGame() {
     hideGameOver();
     showHUD();
     showLevelUp(1);
+    triggerShootingStars(performance.now() / 1000);
     lastTime = performance.now();
     gameState = STATES.PLAYING;
 
@@ -233,6 +261,7 @@ function takeDamage() {
     hitSlowActive = true;
     hitSlowDuration = HIT_SLOW_DURATIONS[getCurrentLevel()] || 2.0;
     hitSlowTimer = hitSlowDuration;
+    hitSlowFrom = speedPenalty;
 }
 
 function gameOver() {
@@ -253,19 +282,21 @@ function gameLoop(timestamp) {
     requestAnimationFrame(gameLoop);
 
     const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
+    const time = timestamp / 1000;
     lastTime = timestamp;
 
     if (gameState === STATES.PLAYING) {
         gameTime += dt;
-        updatePlaying(dt, timestamp / 1000);
+        updatePlaying(dt, time);
     }
 
     const renderer = getRenderer();
     const scene = getScene();
     const camera = getCamera();
 
-    updateSkybox(timestamp / 1000, camera.position);
-    updateHexBackground(timestamp / 1000, camera.position);
+    updateSkybox(time, camera.position);
+    updateHexBackground(time, camera.position);
+    updateShootingStars(time, camera.position);
     renderer.render(scene, camera);
 }
 
@@ -287,19 +318,27 @@ function updatePlaying(dt, time) {
         }
     }
 
-    // Hit slowdown — gradually ramp from HIT_SLOW_MIN back to 1.0
-    let hitSlowMult = 1;
+    // Hit slowdown — ease down to HIT_SLOW_MIN, hold the floor, ease back to 1.0.
+    // Both ends of both curves have zero slope, so there is no velocity step on
+    // impact and no kink when the recovery finishes.
     if (hitSlowActive) {
         hitSlowTimer -= dt;
         if (hitSlowTimer <= 0) {
             hitSlowActive = false;
+            speedPenalty = 1;
         } else {
-            const progress = 1 - (hitSlowTimer / hitSlowDuration);
-            hitSlowMult = HIT_SLOW_MIN + (1 - HIT_SLOW_MIN) * progress;
+            const elapsed = hitSlowDuration - hitSlowTimer;
+            if (elapsed < HIT_SLOW_IN) {
+                speedPenalty = hitSlowFrom -
+                    (hitSlowFrom - HIT_SLOW_MIN) * smoothstep01(elapsed / HIT_SLOW_IN);
+            } else {
+                const progress = (elapsed - HIT_SLOW_IN) / (hitSlowDuration - HIT_SLOW_IN);
+                speedPenalty = HIT_SLOW_MIN + (1 - HIT_SLOW_MIN) * smoothstep01(progress);
+            }
         }
     }
 
-    const forwardSpeed = BASE_FORWARD_SPEED * speedMult * (boostActive ? BOOST_SPEED_MULT : 1) * hitSlowMult;
+    const forwardSpeed = BASE_FORWARD_SPEED * speedMult * (boostActive ? BOOST_SPEED_MULT : 1) * speedPenalty;
 
     // Set forward velocity directly for constant, predictable speed
     marbleBody.velocity.z = forwardSpeed;
@@ -391,6 +430,7 @@ function updatePlaying(dt, time) {
         const levelUp = checkLevelUp(score);
         if (levelUp) {
             showLevelUp(levelUp.level);
+            triggerShootingStars(time);
             playLevelUpSound();
         }
 

@@ -2,8 +2,6 @@ import * as THREE from 'three';
 
 let scene, camera, renderer;
 
-const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
 export function initScene(container) {
     // Scene
     scene = new THREE.Scene();
@@ -54,16 +52,26 @@ function onResize() {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 }
 
-// Pre-compile all shader programs so the first gameplay frame doesn't stall
+// Pre-compile all shader programs so the first gameplay frame doesn't stall.
+// The temp meshes sit off-screen with frustum culling disabled — culled meshes
+// are never submitted, and an unsubmitted material never gets its program built,
+// which is what let the ghost-mode swap stall on the first hit.
 export function warmUpGPU(materials) {
     const tempGeo = new THREE.PlaneGeometry(1, 1);
-    const tempMeshes = materials.map(mat => {
-        const m = new THREE.Mesh(tempGeo, mat);
-        m.position.set(0, -100, 0); // Off-screen
-        scene.add(m);
-        return m;
-    });
+    const tempMeshes = [];
 
+    for (const mat of materials) {
+        if (!mat) continue;
+        const m = new THREE.Mesh(tempGeo, mat);
+        m.position.set(0, -100, 0);
+        m.frustumCulled = false;
+        scene.add(m);
+        tempMeshes.push(m);
+    }
+
+    // compile() builds every program up front; the render pass forces the
+    // driver to finish linking and upload the geometry before gameplay starts.
+    renderer.compile(scene, camera);
     renderer.render(scene, camera);
 
     for (const m of tempMeshes) scene.remove(m);

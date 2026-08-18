@@ -30,6 +30,8 @@ export function initRails(scene) {
     scene.add(rightRail);
 }
 
+export function getRailMaterials() { return [railMat]; }
+
 export function updateRails() {
     if (!leftRail || !rightRail) return;
 
@@ -43,22 +45,16 @@ export function updateRails() {
     leftRail.visible = true;
     rightRail.visible = true;
 
-    // Find Z extent and reference Y from nearest flat segment
+    // Find Z extent, and take reference Y/width from the nearest segment
     let minZ = Infinity;
     let maxZ = -Infinity;
-    let refY = null;
-    let trackWidth = 9;
+    const refY = segments[0].endY;
+    const trackWidth = segments[0].width || 9;
 
     for (const seg of segments) {
         if (seg.zPos < minZ) minZ = seg.zPos;
         if (seg.zPos > maxZ) maxZ = seg.zPos;
-        if (refY === null && seg.type !== 'ramp_up' && seg.type !== 'gap') {
-            refY = seg.endY;
-            trackWidth = seg.width || 9;
-        }
     }
-
-    if (refY === null) refY = segments[0].endY;
 
     // Each segment's geometry extends ±18 units from its zPos
     const padding = 18;

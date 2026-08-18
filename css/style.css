@@ -95,8 +95,10 @@ body {
     height: 28px;
 }
 
+/* Driven directly from the game loop — a CSS transition on top of that
+   just restarts itself every frame */
 #ghost-timer-ring {
-    transition: stroke-dashoffset 0.1s linear;
+    transition: none;
 }
 
 @keyframes ghostPulse {
@@ -305,23 +307,24 @@ body {
     100% { opacity: 0; }
 }
 
-/* Screen shake */
+/* Screen shake — translate3d keeps the canvas layer on the compositor
+   instead of forcing a re-raster mid-hit */
 .screen-shake {
     animation: shake 0.3s ease-out;
 }
 
 @keyframes shake {
-    0%, 100% { transform: translate(0, 0); }
-    10% { transform: translate(-4px, 2px); }
-    20% { transform: translate(4px, -2px); }
-    30% { transform: translate(-3px, 3px); }
-    40% { transform: translate(3px, -1px); }
-    50% { transform: translate(-2px, 2px); }
-    60% { transform: translate(2px, -2px); }
-    70% { transform: translate(-1px, 1px); }
+    0%, 100% { transform: translate3d(0, 0, 0); }
+    10% { transform: translate3d(-4px, 2px, 0); }
+    20% { transform: translate3d(4px, -2px, 0); }
+    30% { transform: translate3d(-3px, 3px, 0); }
+    40% { transform: translate3d(3px, -1px, 0); }
+    50% { transform: translate3d(-2px, 2px, 0); }
+    60% { transform: translate3d(2px, -2px, 0); }
+    70% { transform: translate3d(-1px, 1px, 0); }
 }
 
-/* Red flash overlay */
+/* Red flash overlay — always present, promoted to its own layer, driven by opacity */
 #hit-flash {
     position: fixed;
     top: 0;
@@ -331,6 +334,11 @@ body {
     background: rgba(255, 0, 0, 0.3);
     z-index: 5;
     pointer-events: none;
+    opacity: 0;
+    will-change: opacity;
+}
+
+#hit-flash.active {
     animation: flashFade 0.3s ease-out forwards;
 }
 

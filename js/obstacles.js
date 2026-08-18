@@ -113,8 +113,11 @@ const barMaterial = new THREE.MeshStandardMaterial({
     roughness: 0.4, metalness: 0.4
 });
 
-// Shared geometries — avoids creating new geometry per obstacle
-const blockGeo = new THREE.BoxGeometry(1.4, 1.4, 1.4);
+// Shared geometries — every obstacle reuses these and scales them to size.
+// BoxGeometry UVs are 0–1 per face regardless of dimensions, so a scaled unit
+// cube is pixel-identical to a purpose-built box while costing no allocation,
+// no GPU upload, and no disposal when the obstacle scrolls away.
+const unitBoxGeo = new THREE.BoxGeometry(1, 1, 1);
 const pillarGeo8 = new THREE.CylinderGeometry(0.12, 0.12, 1, 12);
 const pillarGeo10 = new THREE.CylinderGeometry(0.1, 0.1, 1, 12);
 
@@ -125,8 +128,8 @@ function createStaticWall(scene, world, zPos, trackWidth, trackY) {
     const wallDepth = 0.6;
     const xOffset = (Math.random() - 0.5) * (trackWidth - wallWidth) * 0.5;
 
-    const geo = new THREE.BoxGeometry(wallWidth, wallHeight, wallDepth);
-    const mesh = new THREE.Mesh(geo, wallMaterial);
+    const mesh = new THREE.Mesh(unitBoxGeo, wallMaterial);
+    mesh.scale.set(wallWidth, wallHeight, wallDepth);
     mesh.position.set(xOffset, trackY + wallHeight / 2, zPos);
     scene.add(mesh);
 
@@ -160,8 +163,8 @@ function createSwingingArm(scene, world, zPos, trackWidth, trackY) {
     pillar.position.set(0, trackY + pillarH / 2, 0);
     group.add(pillar);
 
-    const armGeo = new THREE.BoxGeometry(armLength, armHeight, armDepth);
-    const arm = new THREE.Mesh(armGeo, armMaterial);
+    const arm = new THREE.Mesh(unitBoxGeo, armMaterial);
+    arm.scale.set(armLength, armHeight, armDepth);
     arm.position.set(0, armY, 0);
     group.add(arm);
 
@@ -193,7 +196,8 @@ function createSwingingArm(scene, world, zPos, trackWidth, trackY) {
 function createSlidingBlock(scene, world, zPos, trackWidth, trackY) {
     const blockSize = 1.4;
 
-    const mesh = new THREE.Mesh(blockGeo, blockMaterial);
+    const mesh = new THREE.Mesh(unitBoxGeo, blockMaterial);
+    mesh.scale.setScalar(blockSize);
     mesh.position.set(0, trackY + blockSize / 2, zPos);
     scene.add(mesh);
 
@@ -231,13 +235,13 @@ function createLowBar(scene, world, zPos, trackWidth, trackY) {
     const group = new THREE.Group();
     group.position.set(0, 0, zPos);
 
-    const leftGeo = new THREE.BoxGeometry(sectionWidth, barHeight, barDepth);
-    const leftBar = new THREE.Mesh(leftGeo, barMaterial);
+    const leftBar = new THREE.Mesh(unitBoxGeo, barMaterial);
+    leftBar.scale.set(sectionWidth, barHeight, barDepth);
     leftBar.position.set(-(gapWidth / 2 + sectionWidth / 2), barY, 0);
     group.add(leftBar);
 
-    const rightGeo = new THREE.BoxGeometry(sectionWidth, barHeight, barDepth);
-    const rightBar = new THREE.Mesh(rightGeo, barMaterial);
+    const rightBar = new THREE.Mesh(unitBoxGeo, barMaterial);
+    rightBar.scale.set(sectionWidth, barHeight, barDepth);
     rightBar.position.set(gapWidth / 2 + sectionWidth / 2, barY, 0);
     group.add(rightBar);
 
@@ -324,24 +328,15 @@ function getObstacleFrequency(level) {
     }
 }
 
+// All obstacle geometry is shared and stays resident, so teardown is just a
+// scene detach plus dropping the physics bodies — no per-obstacle disposal.
 export function removeOldObstacles(scene, world, marbleZ) {
     const removeThreshold = marbleZ + 60;
 
     for (let i = obstacles.length - 1; i >= 0; i--) {
-        if (obstacles[i].zPos > removeThreshold) {
-            const obs = obstacles[i];
+        const obs = obstacles[i];
+        if (obs.zPos > removeThreshold) {
             scene.remove(obs.mesh);
-            // Dispose non-shared geometries only
-            if (obs.mesh.traverse) {
-                obs.mesh.traverse(child => {
-                    if (child.geometry && child.geometry !== blockGeo &&
-                        child.geometry !== pillarGeo8 && child.geometry !== pillarGeo10) {
-                        child.geometry.dispose();
-                    }
-                });
-            } else if (obs.mesh.geometry && obs.mesh.geometry !== blockGeo) {
-                obs.mesh.geometry.dispose();
-            }
             world.removeBody(obs.body);
             if (obs.extraBodies) obs.extraBodies.forEach(b => world.removeBody(b));
             obstacles.splice(i, 1);
@@ -358,16 +353,6 @@ export function getObstacleMaterials() {
 export function resetObstacles(scene, world) {
     for (const obs of obstacles) {
         scene.remove(obs.mesh);
-        if (obs.mesh.traverse) {
-            obs.mesh.traverse(child => {
-                if (child.geometry && child.geometry !== blockGeo &&
-                    child.geometry !== pillarGeo8 && child.geometry !== pillarGeo10) {
-                    child.geometry.dispose();
-                }
-            });
-        } else if (obs.mesh.geometry && obs.mesh.geometry !== blockGeo) {
-            obs.mesh.geometry.dispose();
-        }
         world.removeBody(obs.body);
         if (obs.extraBodies) obs.extraBodies.forEach(b => world.removeBody(b));
     }

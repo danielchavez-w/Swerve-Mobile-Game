@@ -5,8 +5,25 @@ import { GROUPS } from './physics.js';
 let marbleMesh, marbleBody;
 let ghostMode = false;
 let ghostTimer = 0;
+let ghostClock = 0;
 const GHOST_DURATION = 3.0;
 const MARBLE_RADIUS = 0.65;       // Slightly bigger for visibility
+
+// Ghost mode eases in and back out instead of snapping, so getting hit reads as
+// a smooth phase-shift rather than a one-frame pop.
+const GHOST_FADE_IN = 0.22;
+const GHOST_FADE_OUT = 0.5;
+const GHOST_OPACITY = 0.32;
+
+const GLOW_NORMAL = new THREE.Color(0xff66cc);
+const GLOW_GHOST = new THREE.Color(0x00ffff);
+const EMISSIVE_NORMAL = new THREE.Color(0x331144);
+const EMISSIVE_GHOST = new THREE.Color(0x00ffff);
+
+function smoothstep(edge0, edge1, x) {
+    const t = Math.min(Math.max((x - edge0) / (edge1 - edge0), 0), 1);
+    return t * t * (3 - 2 * t);
+}
 
 // Store original material for ghost mode toggle
 let originalMaterial, ghostMaterial;
@@ -153,21 +170,50 @@ export function updateMarble(dt) {
 
     if (ghostMode) {
         ghostTimer -= dt;
-        marbleGlow.color.setHex(0x00ffff);
-        marbleGlow.intensity = 1.5 + Math.sin(ghostTimer * 8) * 0.8;
+        ghostClock += dt;
+
+        // Ramp in on entry, ramp back out before the material swap, so neither
+        // end of ghost mode produces a visible jump.
+        const elapsed = GHOST_DURATION - ghostTimer;
+        const blend = smoothstep(0, GHOST_FADE_IN, elapsed) *
+            (1 - smoothstep(GHOST_DURATION - GHOST_FADE_OUT, GHOST_DURATION, elapsed));
+
+        // Slow shimmer — readable as "phased out" without strobing
+        const shimmer = 0.5 + 0.5 * Math.sin(ghostClock * 5);
+
+        marbleMaterialGhostOpacity(blend, shimmer);
+
+        marbleGlow.color.lerpColors(GLOW_NORMAL, GLOW_GHOST, blend);
+        marbleGlow.intensity = 1.0 + (0.5 + 0.35 * shimmer) * blend;
+
         if (ghostTimer <= 0) {
             endGhostMode();
         }
     } else {
-        marbleGlow.color.setHex(0xff66cc);
+        marbleGlow.color.copy(GLOW_NORMAL);
         marbleGlow.intensity = 1.0;
     }
+}
+
+// Drives the ghost material from fully solid (blend 0) to phased out (blend 1)
+function marbleMaterialGhostOpacity(blend, shimmer) {
+    const target = GHOST_OPACITY + 0.06 * shimmer;
+    ghostMaterial.opacity = 1 - (1 - target) * blend;
+    ghostMaterial.emissive.lerpColors(EMISSIVE_NORMAL, EMISSIVE_GHOST, blend);
+    ghostMaterial.emissiveIntensity = 0.2 + 0.55 * blend;
 }
 
 export function enterGhostMode() {
     if (ghostMode) return;
     ghostMode = true;
     ghostTimer = GHOST_DURATION;
+    ghostClock = 0;
+
+    // Start the ghost material matched to the solid one — the fade does the rest
+    ghostMaterial.opacity = 1;
+    ghostMaterial.emissive.copy(EMISSIVE_NORMAL);
+    ghostMaterial.emissiveIntensity = 0.2;
+
     marbleMesh.material = ghostMaterial;
     marbleBody.collisionFilterMask = GROUPS.TRACK | GROUPS.RAIL;
 }
@@ -178,6 +224,9 @@ export function endGhostMode() {
     marbleMesh.material = originalMaterial;
     marbleBody.collisionFilterMask = GROUPS.TRACK | GROUPS.OBSTACLE | GROUPS.RAIL;
 }
+
+// Both marble materials must be pre-compiled — the swap happens mid-game
+export function getPlayerMaterials() { return [originalMaterial, ghostMaterial]; }
 
 export function isGhostMode() { return ghostMode; }
 export function getGhostTimer() { return ghostTimer; }

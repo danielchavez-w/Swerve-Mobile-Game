@@ -251,6 +251,14 @@ export function updateCollectibles(time, marblePos, marbleRadius, canCollect = t
     let boostCollected = false;
     const now = performance.now();
 
+    // Squared pickup radii — comparing squares avoids a sqrt per item per frame
+    const dotR2 = (marbleRadius + 0.4) ** 2;
+    const diamondR2 = (marbleRadius + 0.5) ** 2;
+    const boostR2 = (marbleRadius + 0.45) ** 2;
+    const hoopDz = marbleRadius + 0.5;
+    // Anything further than this in Z can't be reachable this frame
+    const NEAR_Z = 4;
+
     for (const c of collectibles) {
         // Handle fade-out animation for collected items (in main loop, no separate RAF)
         if (c.collected) {
@@ -282,29 +290,35 @@ export function updateCollectibles(time, marblePos, marbleRadius, canCollect = t
         // Skip collection during ghost mode
         if (!canCollect) continue;
 
-        // Collision detection
-        const dist = marblePos.distanceTo(c.mesh.position);
+        // Cheap Z reject first — most of the list is far up or down the track
+        const pos = c.mesh.position;
+        const dz = marblePos.z - pos.z;
+        if (dz > NEAR_Z || dz < -NEAR_Z) continue;
 
-        if (c.type === COLLECTIBLE_TYPES.DOT && dist < marbleRadius + 0.4) {
-            collectItem(c);
-            pointsEarned += c.points;
-        } else if (c.type === COLLECTIBLE_TYPES.DIAMOND && dist < marbleRadius + 0.5) {
-            collectItem(c);
-            pointsEarned += c.points;
-        } else if (c.type === COLLECTIBLE_TYPES.BOOST && dist < marbleRadius + 0.45) {
-            collectItem(c);
-            pointsEarned += c.points;
-            boostCollected = true;
-        } else if (c.type === COLLECTIBLE_TYPES.HOOP) {
-            const archPos = c.mesh.position;
-            const dz = Math.abs(marblePos.z - archPos.z);
-            const dx = Math.abs(marblePos.x - archPos.x);
+        const dx = marblePos.x - pos.x;
 
+        if (c.type === COLLECTIBLE_TYPES.HOOP) {
             // Ball passes through the arch opening: close in Z, within the arch width
-            if (dz < marbleRadius + 0.5 && dx < c.innerRadius) {
+            if (Math.abs(dz) < hoopDz && Math.abs(dx) < c.innerRadius) {
                 collectItem(c);
                 pointsEarned += c.points;
             }
+            continue;
+        }
+
+        const dy = marblePos.y - pos.y;
+        const distSq = dx * dx + dy * dy + dz * dz;
+
+        if (c.type === COLLECTIBLE_TYPES.DOT && distSq < dotR2) {
+            collectItem(c);
+            pointsEarned += c.points;
+        } else if (c.type === COLLECTIBLE_TYPES.DIAMOND && distSq < diamondR2) {
+            collectItem(c);
+            pointsEarned += c.points;
+        } else if (c.type === COLLECTIBLE_TYPES.BOOST && distSq < boostR2) {
+            collectItem(c);
+            pointsEarned += c.points;
+            boostCollected = true;
         }
     }
 
