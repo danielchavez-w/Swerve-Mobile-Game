@@ -120,6 +120,9 @@ function createBoost(scene, x, y, z) {
 // Safe x-range the ball can actually reach (track half-width minus rail/margin)
 const SAFE_X = 3.0;
 
+// How far past an obstacle an arch is placed so the two never intersect
+const HOOP_OBSTACLE_CLEARANCE = 2.6;
+
 function clampX(x) {
     return Math.max(-SAFE_X, Math.min(SAFE_X, x));
 }
@@ -217,7 +220,13 @@ export function spawnCollectiblesForSegment(scene, segmentZ, trackWidth, difficu
     // Hoop — rarest, placed on safe lane
     if (Math.random() < density * 0.15) {
         const safeX = obstacle ? getSafeLane(obstacle, trackWidth) : 0;
-        const c = createHoop(scene, safeX, y, segmentZ);
+        // Sit the arch clear of the obstacle rather than sharing its plane. The
+        // arch is 2 units across, so at the same Z it draws straight through a
+        // barrier and reads as a rendering glitch. Pushing it further down the
+        // track puts it behind the obstacle: you thread the gap, then pass
+        // through the arch.
+        const z = obstacle ? segmentZ - HOOP_OBSTACLE_CLEARANCE : segmentZ;
+        const c = createHoop(scene, safeX, y, z);
         collectibles.push(c);
         spawned.push(c);
     }
